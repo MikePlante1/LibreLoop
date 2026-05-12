@@ -39,7 +39,7 @@ final class LibreLoopPairingViewModel: ObservableObject {
 
     private func run() async {
         do {
-            let result = try await service.pairFreshSensor { stage in
+            let outcome = try await service.pairFreshSensor { stage in
                 Task { @MainActor in
                     switch stage {
                     case .nfcScanning: self.state = .nfcScanning
@@ -49,8 +49,8 @@ final class LibreLoopPairingViewModel: ObservableObject {
                     }
                 }
             }
-            try cgmManager.applyPairingResult(result)
-            state = .succeeded(serial: result.sensorSerial)
+            try cgmManager.applyPairingOutcome(outcome)
+            state = .succeeded(serial: outcome.result.sensorSerial)
         } catch {
             state = .failed(message: (error as? CustomStringConvertible)?.description
                               ?? error.localizedDescription)

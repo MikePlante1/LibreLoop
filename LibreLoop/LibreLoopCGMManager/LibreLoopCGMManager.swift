@@ -15,6 +15,10 @@ public final class LibreLoopCGMManager: CGMManager {
     public internal(set) var state: LibreLoopCGMManagerState
     public var rawState: CGMManager.RawStateValue { state.rawValue }
 
+    /// Live sensor monitor adopted after a successful pairing. nil before
+    /// pairing or after the BLE session has dropped.
+    var monitor: LibreLoopSensorMonitor?
+
     public let isOnboarded = true
 
     public var appURL: URL? { nil }
@@ -61,6 +65,9 @@ public final class LibreLoopCGMManager: CGMManager {
     }
 
     public func fetchNewDataIfNeeded(_ completion: @escaping (CGMReadingResult) -> Void) {
+        // Glucose samples are delivered asynchronously via
+        // `cgmManagerDelegate?.cgmManager(_, hasNew:)` from the BLE monitor,
+        // so this poll-style API never has anything new to add.
         completion(.noData)
     }
 

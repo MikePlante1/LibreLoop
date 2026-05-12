@@ -50,10 +50,15 @@ public final class LibreLoopPairingService {
 
     public init() {}
 
+    public struct PairOutcome {
+        public let result: Result
+        public let monitor: LibreLoopSensorMonitor
+    }
+
     public func pairFreshSensor(
         receiverID: UInt32 = UInt32.random(in: 1...UInt32.max),
         onStage: @Sendable @escaping (Stage) -> Void = { _ in }
-    ) async throws -> Result {
+    ) async throws -> PairOutcome {
         // 1. NFC activation
         onStage(.nfcScanning)
         let nfcReader = Libre3NFCActivationReader()
@@ -112,7 +117,7 @@ public final class LibreLoopPairingService {
         }
 
         let material = handshake.handshake.sessionMaterial
-        return Result(
+        let result = Result(
             receiverID: receiverID,
             sensorSerial: scanResult.patchInfo.serialNumber,
             bleAddress: activation.bleAddressDisplay,
@@ -121,6 +126,8 @@ public final class LibreLoopPairingService {
             kEnc: material.kEnc,
             ivEnc: material.ivEnc
         )
+        let monitor = try LibreLoopSensorMonitor.make(session: session, kEnc: material.kEnc, ivEnc: material.ivEnc)
+        return PairOutcome(result: result, monitor: monitor)
     }
 
     private static func secureRandomBytes(count: Int) throws -> Data {
