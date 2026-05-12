@@ -19,6 +19,32 @@ public final class LibreLoopCGMManager: CGMManager {
     /// pairing or after the BLE session has dropped.
     var monitor: LibreLoopSensorMonitor?
 
+    /// Most recent glucose sample (in-memory only; not persisted across launches).
+    public private(set) var latestSample: LibreLoopGlucoseSample?
+
+    /// Ring buffer of recently received samples, newest first, capped at 100.
+    public private(set) var recentSamples: [LibreLoopGlucoseSample] = []
+    private static let recentSamplesCap = 100
+
+    /// Computed lifecycle for UI consumption.
+    public var sensorLifecycle: LibreLoopSensorLifecycle {
+        LibreLoopSensorLifecycle.compute(
+            activatedAt: state.activatedAt,
+            latestReadingAt: state.latestReadingTimestamp,
+            hasLiveMonitor: monitor != nil
+        )
+    }
+
+    let stateObservers = LibreLoopWeakObserverSet<LibreLoopStateObserver>()
+
+    func recordSample(_ sample: LibreLoopGlucoseSample) {
+        latestSample = sample
+        recentSamples.insert(sample, at: 0)
+        if recentSamples.count > Self.recentSamplesCap {
+            recentSamples.removeLast(recentSamples.count - Self.recentSamplesCap)
+        }
+    }
+
     public let isOnboarded = true
 
     public var appURL: URL? { nil }

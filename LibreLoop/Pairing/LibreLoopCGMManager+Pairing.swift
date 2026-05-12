@@ -33,9 +33,13 @@ extension LibreLoopCGMManager {
     }
 
     func ingest(_ sample: LibreLoopGlucoseSample) {
+        recordSample(sample)
+
         var updated = state
         updated.latestReadingTimestamp = sample.date
         setState(updated)
+
+        notifyStateObservers()
 
         let newSample = NewGlucoseSample(
             date: sample.date,
@@ -79,5 +83,6 @@ extension LibreLoopCGMManager {
             guard let self else { return }
             self.cgmManagerDelegate?.cgmManagerDidUpdateState(self)
         }
+        notifyStateObservers()
     }
 }
