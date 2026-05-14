@@ -165,10 +165,13 @@ libreloop_product_ref = libreloop.product_reference
 # Pin to a commit SHA since the upstream has no tags yet. Bump as needed.
 # ---------------------------------------------------------------------------
 librecrkit_pkg = proj.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageReference)
+# Back on upstream main after the refresh-data-plane-notifications PR
+# landed (as e9f8b21), plus the f690013 quality-assessment API we now
+# consume in LibreLoopSensorMonitor.
 librecrkit_pkg.repositoryURL = 'https://github.com/airedev326/LibreCRKit.git'
 librecrkit_pkg.requirement = {
   'kind' => 'revision',
-  'revision' => 'd58ffdc3a7810e34ee85ddec702a92f83811bcf7',
+  'revision' => 'f690013632712b6d28e843c774d19cfd1c662898',
 }
 proj.root_object.package_references << librecrkit_pkg
 

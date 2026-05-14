@@ -137,6 +137,7 @@ final class LibreLoopUICoordinator: UINavigationController, CGMManagerOnboarding
                 guard let self else { return }
                 self.completionDelegate?.completionNotifyingDidComplete(self)
             },
+            replaceSensor: { [weak self] in self?.startReplacementPairing() },
             deleteCGM: { [weak self] in
                 self?.cgmManager?.notifyDelegateOfDeletion {
                     DispatchQueue.main.async {
@@ -148,5 +149,71 @@ final class LibreLoopUICoordinator: UINavigationController, CGMManagerOnboarding
             }
         )
         return DismissibleHostingController(content: view, colorPalette: colorPalette)
+    }
+
+    // MARK: - Replacement pairing
+
+    private var isReplacing = false
+
+    private func startReplacementPairing() {
+        guard let manager = cgmManager else { return }
+        isReplacing = true
+        manager.discardSensor()
+        pushReplacementApplyView()
+    }
+
+    private func pushReplacementApplyView() {
+        let view = LibreLoopApplySensorView(
+            onNext: { [weak self] in self?.pushReplacementScanView() },
+            onShowHelp: { [weak self] in self?.presentApplyHelp() },
+            onCancel: { [weak self] in self?.cancelReplacement() }
+        )
+        let vc = DismissibleHostingController(content: view, colorPalette: colorPalette)
+        pushViewController(vc, animated: true)
+    }
+
+    private func pushReplacementScanView() {
+        let view = LibreLoopScanSensorView(
+            onScan: { [weak self] in self?.startReplacementScan(mode: .fresh) },
+            onShowHelp: { [weak self] in self?.presentScanHelp() },
+            onShowRecovery: { [weak self] in self?.pushReplacementRecoveryView() },
+            onCancel: { [weak self] in self?.cancelReplacement() }
+        )
+        let vc = DismissibleHostingController(content: view, colorPalette: colorPalette)
+        pushViewController(vc, animated: true)
+    }
+
+    private func pushReplacementRecoveryView() {
+        let view = LibreLoopRecoveryView(
+            onContinue: { [weak self] receiverID in
+                self?.startReplacementScan(mode: .recovery(receiverID: receiverID))
+            },
+            onCancel: { [weak self] in self?.cancelReplacement() }
+        )
+        let vc = DismissibleHostingController(content: view, colorPalette: colorPalette)
+        pushViewController(vc, animated: true)
+    }
+
+    private func startReplacementScan(mode: LibreLoopPairingService.Mode) {
+        guard let manager = cgmManager else { return }
+        let viewModel = LibreLoopPairingViewModel(cgmManager: manager, mode: mode)
+        let view = LibreLoopPairingProgressView(
+            viewModel: viewModel,
+            onDone: { [weak self] in self?.finishReplacement() },
+            onCancel: { [weak self] in self?.cancelReplacement() },
+            onRetry: { [weak self] in self?.popViewController(animated: true) }
+        )
+        let host = DismissibleHostingController(content: view, colorPalette: colorPalette)
+        pushViewController(host, animated: true)
+    }
+
+    private func finishReplacement() {
+        isReplacing = false
+        popToRootViewController(animated: true)
+    }
+
+    private func cancelReplacement() {
+        isReplacing = false
+        popToRootViewController(animated: true)
     }
 }

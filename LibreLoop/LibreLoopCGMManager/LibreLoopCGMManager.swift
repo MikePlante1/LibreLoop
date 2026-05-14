@@ -21,27 +21,24 @@ public final class LibreLoopCGMManager: CGMManager {
         didSet { notifyStateObservers() }
     }
 
-    /// Current BLE connection state. Derived from monitor lifetime plus the
-    /// freshness of the latest reading (a connected monitor that's gone quiet
-    /// for too long is effectively "stalled").
+    /// Pure BLE connection state. Does NOT incorporate data-freshness
+    /// signals; those belong in the lifecycle bar / Last Reading card so
+    /// this row reflects only Layer 2 reality.
     public var connectionStatus: ConnectionStatus {
         guard state.sensorSerial != nil else { return .notPaired }
-        guard monitor != nil else { return .disconnected }
-        if let last = state.latestReadingTimestamp,
-           Date().timeIntervalSince(last) > 6 * 60 {
-            return .stalled(since: last)
+        if monitor != nil {
+            // We may not have received the first reading yet; that's still a
+            // valid "connected" state at the BLE layer.
+            return .connected
         }
-        if let last = state.latestReadingTimestamp {
-            return .connected(lastDataAt: last)
-        }
-        return .connecting
+        return isReconnecting ? .reconnecting : .disconnected
     }
 
     public enum ConnectionStatus: Equatable {
         case notPaired
         case connecting
-        case connected(lastDataAt: Date)
-        case stalled(since: Date)
+        case connected
+        case reconnecting
         case disconnected
     }
 
@@ -55,13 +52,42 @@ public final class LibreLoopCGMManager: CGMManager {
     /// Computed lifecycle for UI consumption.
     public var sensorLifecycle: LibreLoopSensorLifecycle {
         LibreLoopSensorLifecycle.compute(
+            sensorPaired: state.sensorSerial != nil,
             activatedAt: state.activatedAt,
             latestReadingAt: state.latestReadingTimestamp,
+            firstActionableReadingAt: state.firstActionableReadingAt,
+            lastPairedAt: state.lastPairedAt,
             hasLiveMonitor: monitor != nil
         )
     }
 
     let stateObservers = LibreLoopWeakObserverSet<LibreLoopStateObserver>()
+
+    /// Short human-readable phase string (e.g. "Searching for sensor",
+    /// "Authenticating", "Refreshing notifications", "Waiting for first
+    /// reading"). UI shows this under the Bluetooth row so the user sees
+    /// progress rather than a generic "Connecting…".
+    public internal(set) var statusDetail: String? {
+        didSet { notifyStateObservers() }
+    }
+
+    func updateStatusDetail(_ text: String?) {
+        if Thread.isMainThread {
+            self.statusDetail = text
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.statusDetail = text
+            }
+        }
+    }
+
+    /// True when a reconnect Task is either sleeping before the next attempt
+    /// or actively scanning/handshaking. Drives the "Reconnecting..." status
+    /// in the UI so the user can see we're working on it rather than seeing
+    /// a bare "Disconnected" with no recourse.
+    var isReconnecting: Bool = false {
+        didSet { notifyStateObservers() }
+    }
 
     func recordSample(_ sample: LibreLoopGlucoseSample) {
         latestSample = sample
@@ -69,6 +95,33 @@ public final class LibreLoopCGMManager: CGMManager {
         if recentSamples.count > Self.recentSamplesCap {
             recentSamples.removeLast(recentSamples.count - Self.recentSamplesCap)
         }
+    }
+
+    /// Wipe everything sensor-specific so the user can pair a new sensor while
+    /// keeping the CGM configured with Loop. Stops the BLE monitor, kills the
+    /// reconnect loop, clears in-memory samples, and zeros the per-sensor
+    /// fields of rawState (serial, blePIN, receiverID, peripheralID,
+    /// bleAddress, activatedAt, latestReadingTimestamp).
+    ///
+    /// Session keys for the discarded sensor stay in Keychain (we never
+    /// delete other apps' keys); on Keychain reuse, the new sensor's keys
+    /// overwrite the entry keyed by the new serial.
+    public func discardSensor() {
+        cancelReconnect()
+        monitor?.stop()
+        monitor = nil
+        isReconnecting = false
+        latestSample = nil
+        recentSamples = []
+        var blank = state
+        blank.receiverID = nil
+        blank.sensorSerial = nil
+        blank.bleAddress = nil
+        blank.blePIN = nil
+        blank.peripheralID = nil
+        blank.activatedAt = nil
+        blank.latestReadingTimestamp = nil
+        setState(blank)
     }
 
     public let isOnboarded = true
@@ -105,8 +158,46 @@ public final class LibreLoopCGMManager: CGMManager {
         """
     }
 
+    private var noDataWatchdog: Task<Void, Never>?
+
     public init() {
         self.state = LibreLoopCGMManagerState()
+    }
+
+    deinit {
+        noDataWatchdog?.cancel()
+    }
+
+    /// Watchdog: if a monitor is alive but no glucose readings have arrived
+    /// within the threshold, treat the session as silently dead and force a
+    /// reconnect. Covers the case where BLE is technically "connected" but
+    /// the link is no longer producing notifications (rare; Loop has
+    /// bluetooth-central background mode so backgrounding alone doesn't
+    /// trigger this).
+    private static let noDataThreshold: TimeInterval = 3 * 60
+
+    func startNoDataWatchdog() {
+        noDataWatchdog?.cancel()
+        noDataWatchdog = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(Self.noDataThreshold * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            guard let self else { return }
+            guard self.monitor != nil else { return }
+            // Only force reconnect if we still haven't seen a recent reading.
+            let last = self.state.latestReadingTimestamp
+            let stale = last.map { Date().timeIntervalSince($0) > Self.noDataThreshold } ?? true
+            if stale {
+                await MainActor.run {
+                    self.monitor?.stop()
+                    self.monitor = nil
+                }
+            }
+        }
+    }
+
+    func cancelNoDataWatchdog() {
+        noDataWatchdog?.cancel()
+        noDataWatchdog = nil
     }
 
     public required convenience init?(rawState: CGMManager.RawStateValue) {
@@ -114,12 +205,40 @@ public final class LibreLoopCGMManager: CGMManager {
         if let parsed = LibreLoopCGMManagerState(rawValue: rawState) {
             self.state = parsed
         }
+        // Saved sensor state restored -> kick off a connect attempt so we
+        // start receiving glucose without waiting for Loop's next poll.
+        // Same disconnect path is reused; gated on having a saved blePIN.
+        if state.blePIN != nil && state.sensorSerial != nil {
+            scheduleInitialReconnect()
+        }
     }
 
     public func fetchNewDataIfNeeded(_ completion: @escaping (CGMReadingResult) -> Void) {
         // Glucose samples are delivered asynchronously via
         // `cgmManagerDelegate?.cgmManager(_, hasNew:)` from the BLE monitor,
-        // so this poll-style API never has anything new to add.
+        // so this poll-style API never has anything new to add. But Loop's
+        // periodic calls are a useful nudge to keep the link healthy:
+        //   - No monitor + saved state -> revive reconnect loop.
+        //   - Monitor alive but readings stale -> the session is silently
+        //     dead; drop the monitor so the disconnect path kicks in.
+        let needsRevive = monitor == nil && state.blePIN != nil
+        let isStalled: Bool
+        if monitor != nil,
+           let last = state.latestReadingTimestamp,
+           Date().timeIntervalSince(last) > Self.noDataThreshold {
+            isStalled = true
+        } else {
+            isStalled = false
+        }
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            if needsRevive {
+                self.scheduleInitialReconnect()
+            } else if isStalled {
+                self.monitor?.stop()
+                self.monitor = nil
+            }
+        }
         completion(.noData)
     }
 

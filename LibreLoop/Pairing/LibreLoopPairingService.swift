@@ -83,36 +83,25 @@ public final class LibreLoopPairingService {
     public func reconnect(
         blePIN: Data,
         expectedPeripheralID: UUID? = nil,
-        scanTimeout: TimeInterval = 30,
         onStage: @Sendable @escaping (Stage) -> Void = { _ in }
     ) async throws -> ReconnectOutcome {
         onStage(.bleSearching)
         let scanner = SensorScanner(configuration: .foreground)
         try await scanner.waitUntilReady()
 
-        // Match by peripheral UUID when we have one (saved at first pair).
-        // Without a target, accept the first discovery; with one, ignore
-        // strangers. Bounded by scanTimeout so we don't scan forever.
-        let sensor: DiscoveredSensor = try await withThrowingTaskGroup(of: DiscoveredSensor?.self) { group in
-            group.addTask {
-                for await found in scanner.startScan() {
-                    if expectedPeripheralID == nil || found.id == expectedPeripheralID {
-                        return found
-                    }
-                }
-                return nil
+        // Scan with no application-level timeout. CB keeps the scan radio on
+        // efficiently and yields the peripheral whenever it next advertises;
+        // if it's out of range for a while that's exactly what we want.
+        // Cancellation (e.g. delete CGM) tears the Task down through
+        // structured concurrency.
+        var sensor: DiscoveredSensor?
+        for await found in scanner.startScan() {
+            if expectedPeripheralID == nil || found.id == expectedPeripheralID {
+                sensor = found
+                break
             }
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(scanTimeout * 1_000_000_000))
-                return nil
-            }
-            for try await result in group {
-                group.cancelAll()
-                if let result = result { return result }
-                throw Failure.bleNoSensorDiscovered
-            }
-            throw Failure.bleNoSensorDiscovered
         }
+        guard let sensor else { throw Failure.bleNoSensorDiscovered }
 
         onStage(.bleConnecting)
         let session: SensorSession

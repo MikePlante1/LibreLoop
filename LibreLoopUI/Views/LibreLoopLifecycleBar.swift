@@ -3,6 +3,10 @@ import LibreLoop
 
 struct LibreLoopLifecycleBar: View {
     let lifecycle: LibreLoopSensorLifecycle
+    /// Optional protocol-level detail (Authenticating / Refreshing
+    /// notifications / Waiting for first reading). Surfaced as the
+    /// lifecycle bar's secondary line during the Initializing phase.
+    var statusDetail: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -31,7 +35,7 @@ struct LibreLoopLifecycleBar: View {
 
     private var progress: Double {
         switch lifecycle {
-        case .noSensor: return 0
+        case .noSensor, .initializing, .pairingWarmup: return 0
         case .warmup(let p, _): return p
         case .active(let remaining):
             let elapsed = LibreLoopSensorLifecycle.activeDuration - remaining
@@ -43,11 +47,13 @@ struct LibreLoopLifecycleBar: View {
 
     private var stateColor: Color {
         switch lifecycle {
-        case .noSensor:   return .gray
-        case .warmup:     return .orange
-        case .active:     return .green
-        case .expired:    return .red
-        case .signalLost: return .yellow
+        case .noSensor:       return .gray
+        case .initializing:   return .yellow
+        case .warmup:         return .orange
+        case .pairingWarmup:  return .orange
+        case .active:         return .green
+        case .expired:        return .red
+        case .signalLost:     return .yellow
         }
     }
 
@@ -55,8 +61,19 @@ struct LibreLoopLifecycleBar: View {
         switch lifecycle {
         case .noSensor:
             return ""
+        case .initializing:
+            return statusDetail ?? "Waiting for first reading"
         case .warmup(_, let remaining):
             return "\(formatRemaining(remaining)) until ready"
+        case .pairingWarmup(let pairedAt):
+            // pairedAt is the real `state.lastPairedAt` only when we have
+            // one persisted; otherwise compute() passed back `now` as a
+            // placeholder and we shouldn't claim "0s ago".
+            let elapsed = Date().timeIntervalSince(pairedAt)
+            if elapsed < 1 {
+                return "Awaiting first actionable reading"
+            }
+            return "Paired \(formatElapsed(elapsed)) ago"
         case .active(let remaining):
             return "\(formatRemaining(remaining)) remaining"
         case .expired:
@@ -64,6 +81,14 @@ struct LibreLoopLifecycleBar: View {
         case .signalLost(let since):
             return "Last reading \(Self.relativeFormatter.localizedString(for: since, relativeTo: Date()))"
         }
+    }
+
+    private func formatElapsed(_ seconds: TimeInterval) -> String {
+        let hours = Int(seconds / 3_600)
+        let minutes = Int((seconds.truncatingRemainder(dividingBy: 3_600)) / 60)
+        if hours >= 1 { return "\(hours)h \(minutes)m" }
+        if minutes >= 1 { return "\(minutes)m" }
+        return "\(Int(seconds))s"
     }
 
     private func formatRemaining(_ seconds: TimeInterval) -> String {

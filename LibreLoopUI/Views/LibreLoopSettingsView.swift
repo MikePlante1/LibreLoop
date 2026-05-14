@@ -4,9 +4,11 @@ import LibreLoop
 struct LibreLoopSettingsView: View {
     @ObservedObject var viewModel: LibreLoopSettingsViewModel
     let didFinish: () -> Void
+    let replaceSensor: () -> Void
     let deleteCGM: () -> Void
 
     @State private var confirmingDelete = false
+    @State private var confirmingReplace = false
     @State private var showingAllReadings = false
 
     var body: some View {
@@ -29,13 +31,20 @@ struct LibreLoopSettingsView: View {
         } message: {
             Text("This removes the FreeStyle Libre 3 CGM from Loop. You'll need to re-pair to resume readings.")
         }
+        .confirmationDialog("Pair a new sensor?", isPresented: $confirmingReplace, titleVisibility: .visible) {
+            Button("Continue", action: replaceSensor)
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This stops monitoring the current sensor and starts pairing for a new one. The CGM stays configured with Loop.")
+        }
         .onAppear { viewModel.subscribe() }
         .onDisappear { viewModel.unsubscribe() }
     }
 
     private var sensorSection: some View {
         Section("Sensor") {
-            LibreLoopLifecycleBar(lifecycle: viewModel.lifecycle)
+            LibreLoopLifecycleBar(lifecycle: viewModel.lifecycle,
+                                  statusDetail: viewModel.statusDetail)
                 .padding(.vertical, 4)
             HStack(spacing: 8) {
                 Circle()
@@ -46,12 +55,6 @@ struct LibreLoopSettingsView: View {
                 Text(connectionLabel)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
-            }
-            if case .disconnected = viewModel.connectionStatus {
-                Button(viewModel.reconnecting ? "Reconnecting…" : "Reconnect now") {
-                    viewModel.reconnect()
-                }
-                .disabled(viewModel.reconnecting)
             }
             if let serial = viewModel.sensorSerial {
                 LabeledContent("Serial", value: serial)
@@ -89,6 +92,7 @@ struct LibreLoopSettingsView: View {
                     Text("\(Int(sample.valueMgDL))")
                         .font(.system(size: 44, weight: .semibold, design: .rounded))
                         .monospacedDigit()
+                        .foregroundStyle(sample.isActionable ? .primary : .secondary)
                     Text("mg/dL")
                         .font(.headline)
                         .foregroundStyle(.secondary)
@@ -108,6 +112,12 @@ struct LibreLoopSettingsView: View {
                     }
                 }
                 .font(.footnote)
+                if !sample.isActionable {
+                    Label(sample.qualityIssue ?? "Not sent to Loop",
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.footnote)
+                        .foregroundStyle(.orange)
+                }
             } else {
                 Text("Waiting for first reading…")
                     .foregroundStyle(.secondary)
@@ -134,6 +144,9 @@ struct LibreLoopSettingsView: View {
 
     private var deleteSection: some View {
         Section {
+            Button("Pair new sensor") {
+                confirmingReplace = true
+            }
             Button("Delete CGM", role: .destructive) {
                 confirmingDelete = true
             }
@@ -142,11 +155,11 @@ struct LibreLoopSettingsView: View {
 
     private var connectionColor: Color {
         switch viewModel.connectionStatus {
-        case .connected:    return .green
-        case .connecting:   return .yellow
-        case .stalled:      return .orange
-        case .disconnected: return .red
-        case .notPaired:    return .gray
+        case .connected:     return .green
+        case .connecting:    return .yellow
+        case .reconnecting:  return .yellow
+        case .disconnected:  return .red
+        case .notPaired:     return .gray
         }
     }
 
@@ -154,10 +167,8 @@ struct LibreLoopSettingsView: View {
         switch viewModel.connectionStatus {
         case .notPaired:    return "Not paired"
         case .connecting:   return "Connecting…"
-        case .connected(let last):
-            return "Last data \(Self.relative.localizedString(for: last, relativeTo: Date()))"
-        case .stalled(let since):
-            return "No data since \(Self.relative.localizedString(for: since, relativeTo: Date()))"
+        case .reconnecting: return "Reconnecting…"
+        case .connected:    return "Connected"
         case .disconnected: return "Disconnected"
         }
     }
@@ -192,6 +203,7 @@ struct LibreLoopReadingRow: View {
             Text("\(Int(sample.valueMgDL))")
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
+                .foregroundStyle(sample.isActionable ? .primary : .secondary)
                 .frame(width: 48, alignment: .trailing)
             if let rate = sample.rateOfChangeMgDLPerMinute {
                 Text(String(format: "%+.1f", rate))
@@ -199,11 +211,17 @@ struct LibreLoopReadingRow: View {
                     .monospacedDigit()
                     .frame(width: 56, alignment: .trailing)
             }
+            if !sample.isActionable {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .imageScale(.small)
+            }
             Spacer()
             Image(systemName: trendSymbol)
                 .foregroundStyle(.secondary)
         }
         .font(.subheadline)
+        .opacity(sample.isActionable ? 1.0 : 0.7)
     }
 
     private var trendSymbol: String {
@@ -223,7 +241,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
 
     @Published private(set) var lifecycle: LibreLoopSensorLifecycle
     @Published private(set) var connectionStatus: LibreLoopCGMManager.ConnectionStatus
-    @Published private(set) var reconnecting: Bool = false
+    @Published private(set) var statusDetail: String?
     @Published private(set) var latestSample: LibreLoopGlucoseSample?
     @Published private(set) var recentSamples: [LibreLoopGlucoseSample]
     @Published private(set) var sensorSerial: String?
@@ -236,6 +254,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
         self.cgmManager = cgmManager
         self.lifecycle = cgmManager.sensorLifecycle
         self.connectionStatus = cgmManager.connectionStatus
+        self.statusDetail = cgmManager.statusDetail
         self.latestSample = cgmManager.latestSample
         self.recentSamples = cgmManager.recentSamples
         self.sensorSerial = cgmManager.state.sensorSerial
@@ -251,18 +270,16 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
 
     func subscribe() {
         cgmManager.addStateObserver(self)
+        // Sync immediately from current state. Without this, any changes
+        // that happened while we weren't observing (e.g. a Pair-new-sensor
+        // flow run from a pushed view) leave the @Published fields stale.
+        libreLoopCGMManager(cgmManager,
+                            didUpdate: cgmManager.state,
+                            latestSample: cgmManager.latestSample)
     }
 
     func unsubscribe() {
         cgmManager.removeStateObserver(self)
-    }
-
-    func reconnect() {
-        reconnecting = true
-        Task { [weak self] in
-            await self?.cgmManager.reconnectIfPossible()
-            await MainActor.run { self?.reconnecting = false }
-        }
     }
 
     func libreLoopCGMManager(_ manager: LibreLoopCGMManager,
@@ -271,6 +288,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
         DispatchQueue.main.async {
             self.lifecycle = manager.sensorLifecycle
             self.connectionStatus = manager.connectionStatus
+            self.statusDetail = manager.statusDetail
             self.latestSample = latestSample
             self.recentSamples = manager.recentSamples
             self.sensorSerial = state.sensorSerial

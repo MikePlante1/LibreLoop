@@ -17,6 +17,16 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     public var peripheralID: UUID?
     public var activatedAt: Date?
     public var latestReadingTimestamp: Date?
+    /// Timestamp of the first reading the sensor flagged as actionable for
+    /// the current receiver. Switch-receiver puts the sensor into a
+    /// stabilization window during which every reading comes through with
+    /// `actionability == .notActionable`; using this as the lifecycle-bar
+    /// "warmup complete" signal is more reliable than wall-clock heuristics.
+    public var firstActionableReadingAt: Date?
+    /// Set on successful pairing (fresh or switch-receiver). Anchors the
+    /// "time elapsed since pair" display while we're warming up, since we
+    /// don't have a reliable sensor-side warmup-remaining signal yet.
+    public var lastPairedAt: Date?
 
     public init() {}
 
@@ -28,6 +38,8 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         self.peripheralID = (rawValue["peripheralID"] as? String).flatMap(UUID.init(uuidString:))
         self.activatedAt = rawValue["activatedAt"] as? Date
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
+        self.firstActionableReadingAt = rawValue["firstActionableReadingAt"] as? Date
+        self.lastPairedAt = rawValue["lastPairedAt"] as? Date
     }
 
     public var rawValue: RawValue {
@@ -39,6 +51,8 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         raw["peripheralID"] = peripheralID?.uuidString
         raw["activatedAt"] = activatedAt
         raw["latestReadingTimestamp"] = latestReadingTimestamp
+        raw["firstActionableReadingAt"] = firstActionableReadingAt
+        raw["lastPairedAt"] = lastPairedAt
         return raw
     }
 }

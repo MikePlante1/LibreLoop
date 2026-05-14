@@ -35,6 +35,11 @@ extension LibreLoopCGMManager {
 
         var newState = state
         newState.peripheralID = outcome.peripheralID
+        newState.lastPairedAt = Date()
+        // Switch-receiver re-arms sensor stabilization; clear the prior
+        // actionable timestamp so the lifecycle bar correctly reports
+        // "Warming up" until the new pairing produces an actionable reading.
+        newState.firstActionableReadingAt = nil
         setState(newState)
 
         adopt(monitor: outcome.monitor)
@@ -44,13 +49,19 @@ extension LibreLoopCGMManager {
         self.monitor = monitor
         monitor.setHandlers(
             onReading: { [weak self] sample in self?.ingest(sample) },
-            onDisconnect: { [weak self] in self?.handleMonitorDisconnect() }
+            onDisconnect: { [weak self] in self?.handleMonitorDisconnect() },
+            onStatus: { [weak self] text in self?.updateStatusDetail(text) }
         )
         monitor.start()
+        // Start the no-data watchdog immediately after adoption -- if the
+        // first reading doesn't arrive within the threshold, the link is
+        // probably silently dead and a reconnect is in order.
+        startNoDataWatchdog()
     }
 
     func ingest(_ sample: LibreLoopGlucoseSample) {
         recordSample(sample)
+        cancelNoDataWatchdog()
 
         var updated = state
         updated.latestReadingTimestamp = sample.date
@@ -61,9 +72,23 @@ extension LibreLoopCGMManager {
         if updated.activatedAt == nil {
             updated.activatedAt = sample.date.addingTimeInterval(-TimeInterval(sample.lifeCount) * 60)
         }
+        // First time the sensor flags a reading actionable post-pair tells
+        // us warmup is done. Pin it so the lifecycle bar can leave warmup.
+        if sample.isActionable, updated.firstActionableReadingAt == nil {
+            updated.firstActionableReadingAt = sample.date
+        }
         setState(updated)
 
         notifyStateObservers()
+
+        // Status detail moves out of "Waiting for first reading" the instant
+        // any reading arrives, even unactionable ones -- the link is proven.
+        if !sample.isActionable {
+            updateStatusDetail("Reading received (not actionable)")
+            log.info("ingested non-actionable sample (\(Int(sample.valueMgDL)) mg/dL); not forwarding to Loop")
+            return
+        }
+        updateStatusDetail(nil)
 
         let newSample = NewGlucoseSample(
             date: sample.date,
@@ -86,30 +111,49 @@ extension LibreLoopCGMManager {
         }
     }
 
-    private func handleMonitorDisconnect() {
-        log.warning("monitor reported disconnect; clearing and scheduling reconnect")
-        self.monitor = nil
-        scheduleReconnect(attempt: 0)
-    }
+    /// Delay between reconnect attempts. The first attempt after a disconnect
+    /// uses this delay to let the BLE stack finish tearing down the dead link
+    /// (avoids racing the disconnect cleanup). Subsequent attempts after a
+    /// failed attempt also wait this long before retrying. CoreBluetooth's
+    /// scan keeps the radio efficient under the hood, so a constant interval
+    /// here doesn't need backoff.
+    private static let reconnectDelay: TimeInterval = 2
 
-    /// Backoff schedule (seconds) for unattended reconnect after a BLE drop.
-    /// Mirrors the G7BluetoothManager pattern: short initial delay then a
-    /// climbing series, capping at a minute and repeating indefinitely until
-    /// a session establishes or the user deletes the CGM.
-    private static let reconnectBackoff: [TimeInterval] = [2, 5, 15, 30, 60]
-
-    private static let reconnectTaskKey = "LibreLoop.reconnectTask"
     private static var reconnectTasks: [ObjectIdentifier: Task<Void, Never>] = [:]
 
-    func scheduleReconnect(attempt: Int) {
+    private func handleMonitorDisconnect() {
+        log.warning("monitor reported disconnect; clearing and reconnecting")
+        self.monitor = nil
         cancelReconnect()
-        let delay = Self.reconnectBackoff[min(attempt, Self.reconnectBackoff.count - 1)]
-        log.info("reconnect: scheduling attempt #\(attempt + 1) in \(Int(delay))s")
+        startReconnectLoop()
+    }
+
+    /// Persistent reconnect loop. Keeps trying as long as the manager exists
+    /// and we have saved state to reconnect with. Stops only on success
+    /// (a monitor is adopted) or on Task cancellation (CGM deleted, manager
+    /// torn down). The user never has to push a button.
+    private func startReconnectLoop() {
         let task = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-            guard let self else { return }
-            guard !Task.isCancelled else { return }
-            await self.runReconnect(attempt: attempt)
+            while !Task.isCancelled {
+                guard let self else { return }
+                guard self.monitor == nil else { return }
+                guard self.state.blePIN != nil, self.state.sensorSerial != nil else {
+                    log.error("reconnect loop: no saved state; aborting")
+                    await MainActor.run { self.isReconnecting = false }
+                    return
+                }
+                await MainActor.run { self.isReconnecting = true }
+                try? await Task.sleep(nanoseconds: UInt64(Self.reconnectDelay * 1_000_000_000))
+                if Task.isCancelled { break }
+                await self.runReconnectOnce()
+                if self.monitor != nil {
+                    await MainActor.run { self.isReconnecting = false }
+                    return
+                }
+                // failure -> loop back, sleep, retry. Never gives up.
+            }
+            // Cancelled: make sure the indicator clears.
+            await MainActor.run { self?.isReconnecting = false }
         }
         Self.reconnectTasks[ObjectIdentifier(self)] = task
     }
@@ -122,23 +166,19 @@ extension LibreLoopCGMManager {
         }
     }
 
-    private func runReconnect(attempt: Int) async {
-        guard monitor == nil else {
-            log.info("reconnect: already connected; aborting attempt")
-            return
-        }
+    private func runReconnectOnce() async {
         guard let blePIN = state.blePIN, let serial = state.sensorSerial else {
-            log.error("reconnect: missing saved state; manual re-pair required")
             return
         }
         let expectedPeripheral = state.peripheralID
-        log.info("reconnect: attempt #\(attempt + 1) starting (peripheralID=\(expectedPeripheral?.uuidString ?? "any"))")
+        log.info("reconnect: attempt starting (peripheralID=\(expectedPeripheral?.uuidString ?? "any"))")
         do {
             let outcome = try await LibreLoopPairingService().reconnect(
                 blePIN: blePIN,
                 expectedPeripheralID: expectedPeripheral
-            ) { stage in
+            ) { [weak self] stage in
                 log.info("reconnect stage: \(String(describing: stage))")
+                self?.updateStatusDetail(Self.statusText(for: stage))
             }
             try LibreLoopKeychain.save(
                 LibreLoopKeychain.SessionKeys(kEnc: outcome.kEnc, ivEnc: outcome.ivEnc),
@@ -147,17 +187,25 @@ extension LibreLoopCGMManager {
             await MainActor.run {
                 self.adopt(monitor: outcome.monitor)
             }
-            log.info("reconnect: succeeded on attempt #\(attempt + 1)")
+            log.info("reconnect: succeeded")
         } catch {
-            log.error("reconnect: attempt #\(attempt + 1) failed: \(String(describing: error)) - rescheduling")
-            scheduleReconnect(attempt: attempt + 1)
+            log.error("reconnect: attempt failed: \(String(describing: error)) - looping")
         }
     }
 
-    /// Manual "Reconnect now" entry point used by the settings UI.
-    public func reconnectIfPossible() async {
-        cancelReconnect()
-        await runReconnect(attempt: 0)
+    /// Trigger an automatic reconnect loop if we have saved state and aren't
+    /// already running one. Called from app-launch state restore and from
+    /// Loop's periodic fetchNewDataIfNeeded poll.
+    func scheduleInitialReconnect() {
+        let key = ObjectIdentifier(self)
+        guard Self.reconnectTasks[key] == nil else {
+            return
+        }
+        guard monitor == nil else {
+            return
+        }
+        log.info("reconnect: auto-trigger (launch or poll)")
+        startReconnectLoop()
     }
 
     private static func mapTrend(_ trend: LibreLoopGlucoseSample.Trend) -> GlucoseTrend? {
@@ -168,6 +216,15 @@ extension LibreLoopCGMManager {
         case .stable:         return .flat
         case .falling:        return .down
         case .fallingQuickly: return .downDown
+        }
+    }
+
+    static func statusText(for stage: LibreLoopPairingService.Stage) -> String {
+        switch stage {
+        case .nfcScanning:   return "Scanning sensor"
+        case .bleSearching:  return "Searching for sensor"
+        case .bleConnecting: return "Connecting"
+        case .handshaking:   return "Authenticating"
         }
     }
 

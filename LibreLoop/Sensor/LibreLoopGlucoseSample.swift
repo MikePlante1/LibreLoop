@@ -20,6 +20,10 @@ public struct LibreLoopGlucoseSample: Equatable, Sendable {
     public let lifeCount: UInt16
     public let sensorTemperatureRaw: UInt16
     public let isActionable: Bool
+    /// Short human-readable reason when the sensor refuses to flag the
+    /// reading actionable (e.g. "Warming up: 18 min remaining",
+    /// "Sensor condition: invalid"). nil when the reading IS actionable.
+    public let qualityIssue: String?
 
     public init(
         date: Date,
@@ -28,7 +32,8 @@ public struct LibreLoopGlucoseSample: Equatable, Sendable {
         rateOfChangeMgDLPerMinute: Double?,
         lifeCount: UInt16,
         sensorTemperatureRaw: UInt16,
-        isActionable: Bool
+        isActionable: Bool,
+        qualityIssue: String? = nil
     ) {
         self.date = date
         self.valueMgDL = valueMgDL
@@ -37,5 +42,6 @@ public struct LibreLoopGlucoseSample: Equatable, Sendable {
         self.lifeCount = lifeCount
         self.sensorTemperatureRaw = sensorTemperatureRaw
         self.isActionable = isActionable
+        self.qualityIssue = qualityIssue
     }
 }

@@ -15,6 +15,7 @@ private let log = Logger(subsystem: "org.loopkit.LibreLoop", category: "Monitor"
 public final class LibreLoopSensorMonitor: @unchecked Sendable {
     public typealias ReadingHandler = @Sendable (LibreLoopGlucoseSample) -> Void
     public typealias DisconnectHandler = @Sendable () -> Void
+    public typealias StatusHandler = @Sendable (String) -> Void
 
     private let session: SensorSession
     // Held strongly so the underlying CBCentralManager survives past pairing.
@@ -28,6 +29,7 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     private var task: Task<Void, Never>?
     private var readingHandler: ReadingHandler?
     private var disconnectHandler: DisconnectHandler?
+    private var statusHandler: StatusHandler?
 
     init(scanner: SensorScanner, session: SensorSession, kEnc: Data, ivEnc: Data) throws {
         self.scanner = scanner
@@ -37,11 +39,20 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     }
 
     public func setHandlers(onReading: @escaping ReadingHandler,
-                            onDisconnect: @escaping DisconnectHandler) {
+                            onDisconnect: @escaping DisconnectHandler,
+                            onStatus: @escaping StatusHandler = { _ in }) {
         lock.lock()
         defer { lock.unlock() }
         self.readingHandler = onReading
         self.disconnectHandler = onDisconnect
+        self.statusHandler = onStatus
+    }
+
+    private func emitStatus(_ text: String) {
+        lock.lock()
+        let h = statusHandler
+        lock.unlock()
+        h?(text)
     }
 
     public func start() {
@@ -53,8 +64,10 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
         let newTask = Task { [weak self] in
             guard let self else { return }
             log.info("monitor starting; refreshing post-auth notifications")
+            self.emitStatus("Refreshing notifications")
             await self.refreshPostAuthNotifications()
             log.info("monitor consuming session.notifications()")
+            self.emitStatus("Waiting for first reading")
             var eventCount = 0
             for await event in self.session.notifications() {
                 eventCount += 1
@@ -76,29 +89,19 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     /// After Phase 6 the sensor's data-plane characteristics need a CCCD
     /// off→on cycle before the sensor will start streaming. Without this
     /// the BLE session stays open but no glucose notifications arrive, and
-    /// eventually iOS or the sensor drops the link. Mirrors the upstream
-    /// PoC's `refreshFirstPairPostAuthNotifications`.
+    /// eventually iOS or the sensor drops the link.
+    ///
+    /// Delegated to LibreCRKit's `SensorSession.refreshDataPlaneNotifications()`
+    /// (added in the refresh-data-plane-notifications branch); LibreLoop
+    /// previously implemented this inline.
     private func refreshPostAuthNotifications() async {
-        let chars: [(String, CBUUID)] = [
-            ("patchControl", LibreSensorGATT.Char.patchControl),
-            ("eventLog",     LibreSensorGATT.Char.eventLog),
-            ("factoryData",  LibreSensorGATT.Char.factoryData),
-            ("glucoseData",  LibreSensorGATT.Char.glucoseData),
-            ("patchStatus",  LibreSensorGATT.Char.patchStatus),
-        ]
-        for (name, uuid) in chars {
-            do {
-                log.info("CCCD \(name) off")
-                try await session.setNotify(false, for: uuid, timeout: 8)
-                try? await Task.sleep(nanoseconds: 90_000_000)
-                log.info("CCCD \(name) on")
-                try await session.setNotify(true, for: uuid, timeout: 8)
-                try? await Task.sleep(nanoseconds: 90_000_000)
-            } catch {
-                log.error("CCCD \(name) refresh failed: \(String(describing: error))")
-            }
+        do {
+            log.info("CCCD refresh starting")
+            try await session.refreshDataPlaneNotifications()
+            log.info("CCCD refresh complete")
+        } catch {
+            log.error("CCCD refresh failed: \(String(describing: error))")
         }
-        log.info("CCCD refresh complete")
     }
 
     public func stop() {
@@ -123,14 +126,22 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             let packet = try decoder.decrypt(frame: frame, channel: channel)
             switch packet.payload {
             case .realtimeGlucose(let reading):
-                if let sample = Self.makeSample(from: reading, receivedAt: event.receivedAt) {
-                    log.info("glucose \(Int(sample.valueMgDL)) mg/dL lifeCount=\(sample.lifeCount) trend=\(String(describing: sample.trend))")
+                // Build a SensorLifecycle from the reading's own age counter so
+                // the quality assessment can correctly attribute "not actionable"
+                // to warmup when applicable (and report remaining warmup minutes).
+                let lifecycle = SensorLifecycle(currentLifeCountMinutes: Int(reading.lifeCount))
+                let assessment = reading.currentGlucoseQualityAssessment(lifecycle: lifecycle)
+                if assessment.issues.isEmpty {
+                    log.info("glucose mgdl=\(reading.currentGlucoseMgDL.map(String.init) ?? "nil") lifeCount=\(reading.lifeCount) trend=\(String(describing: reading.trendKind))")
+                } else {
+                    let issueText = assessment.issues.map { String(describing: $0) }.joined(separator: ", ")
+                    log.info("glucose mgdl=\(reading.currentGlucoseMgDL.map(String.init) ?? "nil") lifeCount=\(reading.lifeCount) issues=[\(issueText)]")
+                }
+                if let sample = Self.makeSample(from: reading, assessment: assessment, receivedAt: event.receivedAt) {
                     lock.lock()
                     let handler = readingHandler
                     lock.unlock()
                     handler?(sample)
-                } else {
-                    log.info("glucose reading not actionable; skipped")
                 }
             default:
                 log.debug("\(channel.rawValue) packet kind=\(packet.kind.rawValue) (no sample)")
@@ -140,10 +151,18 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
         }
     }
 
-    private static func makeSample(from reading: RealtimeGlucoseReading, receivedAt: Date) -> LibreLoopGlucoseSample? {
-        guard reading.isCurrentGlucoseUsable, let mgdl = reading.currentGlucoseMgDL else {
-            return nil
-        }
+    /// Make a sample whenever we get a numeric mg/dL value, regardless of
+    /// the sensor's actionability/quality flags. The flags are propagated to
+    /// the manager via `isActionable` (which decides whether to forward the
+    /// sample to Loop) and `qualityIssue` (UI text). Lower layers still see
+    /// the reading so the link is proven alive even during not-actionable
+    /// windows.
+    private static func makeSample(
+        from reading: RealtimeGlucoseReading,
+        assessment: Libre3GlucoseQualityAssessment,
+        receivedAt: Date
+    ) -> LibreLoopGlucoseSample? {
+        guard let mgdl = reading.currentGlucoseMgDL else { return nil }
         return LibreLoopGlucoseSample(
             date: receivedAt,
             valueMgDL: Double(mgdl),
@@ -151,8 +170,40 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             rateOfChangeMgDLPerMinute: reading.rateOfChangeMgDLPerMinute.map(Double.init),
             lifeCount: reading.lifeCount,
             sensorTemperatureRaw: reading.temperature,
-            isActionable: reading.actionability == .actionable
+            isActionable: assessment.isUsable,
+            qualityIssue: describeIssues(assessment.issues)
         )
+    }
+
+    /// Pick the most user-relevant issue and render it as a short UI string.
+    /// Warmup and expiration are the most actionable signals to a user; we
+    /// surface those preferentially and fall back to a one-line summary of
+    /// the rest.
+    private static func describeIssues(_ issues: [Libre3GlucoseQualityIssue]) -> String? {
+        guard !issues.isEmpty else { return nil }
+        for issue in issues {
+            switch issue {
+            case .sensorWarmup(let remaining):
+                return "Warming up — \(remaining) min remaining"
+            case .sensorExpired:
+                return "Sensor expired"
+            default:
+                continue
+            }
+        }
+        // No warmup/expired; describe the first remaining issue compactly.
+        switch issues[0] {
+        case .currentGlucoseUnavailable:
+            return "Glucose unavailable"
+        case .currentDataQuality(let dq):
+            return "Data quality: \(dq)"
+        case .sensorCondition(let cond):
+            return "Sensor condition: \(cond)"
+        case .notActionable:
+            return "Not actionable"
+        default:
+            return "Reading not actionable"
+        }
     }
 
     private static func mapTrend(_ libre: Libre3Trend) -> LibreLoopGlucoseSample.Trend {
