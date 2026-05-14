@@ -1,5 +1,6 @@
 import Foundation
 import HealthKit
+import LibreCRKit
 import LoopKit
 import os.log
 
@@ -47,10 +48,13 @@ extension LibreLoopCGMManager {
 
     func adopt(monitor: LibreLoopSensorMonitor) {
         self.monitor = monitor
+        // Each new BLE session gets its own backfill window.
+        self.hasRequestedBackfillThisSession = false
         monitor.setHandlers(
             onReading: { [weak self] sample in self?.ingest(sample) },
             onDisconnect: { [weak self] in self?.handleMonitorDisconnect() },
-            onStatus: { [weak self] text in self?.updateStatusDetail(text) }
+            onStatus: { [weak self] text in self?.updateStatusDetail(text) },
+            onHistoricalPage: { [weak self] page in self?.handleHistoricalPage(page) }
         )
         monitor.start()
         // Start the no-data watchdog immediately after adoption -- if the
@@ -59,9 +63,51 @@ extension LibreLoopCGMManager {
         startNoDataWatchdog()
     }
 
+    /// Compute the lifecount to start backfill from for the current session.
+    /// Mirrors the upstream PoC's `historyBackfillStart`: if we have a saved
+    /// watermark, request that minus a 10-count overlap (avoids gaps on
+    /// either side of the reconnect boundary); otherwise look back 180
+    /// lifecounts (~15 hours) from the current realtime reading.
+    ///
+    /// We never send `lifeCount = 0` — empirically the sensor silently
+    /// ignores "give me everything" requests; it wants a bounded range.
+    private func backfillStartLifeCount(currentLifeCount: UInt16) -> UInt16 {
+        if let saved = state.lastHistoricalLifeCount {
+            let overlap: UInt16 = 10
+            return saved > overlap ? saved &- overlap : 5
+        }
+        let lookback: UInt16 = 180
+        return currentLifeCount > lookback ? currentLifeCount &- lookback : 5
+    }
+
+    /// Trigger a backfill request once per BLE session, anchored to a real
+    /// realtime reading's lifecount. Called from `ingest`. Subsequent
+    /// realtime readings during the same session are no-ops.
+    func requestBackfillIfNeeded(currentLifeCount: UInt16) {
+        guard !hasRequestedBackfillThisSession else { return }
+        guard let monitor else { return }
+        hasRequestedBackfillThisSession = true
+        let from = backfillStartLifeCount(currentLifeCount: currentLifeCount)
+        Task { [weak self, weak monitor] in
+            guard let monitor else { return }
+            do {
+                try await monitor.requestHistoricalBackfill(fromLifeCount: from)
+            } catch {
+                guard let self else { return }
+                log.error("backfill request failed: \(String(describing: error))")
+                self.hasRequestedBackfillThisSession = false   // retry on next reading
+            }
+        }
+    }
+
     func ingest(_ sample: LibreLoopGlucoseSample) {
         recordSample(sample)
         cancelNoDataWatchdog()
+
+        // Now that we have a confirmed realtime reading, we know the
+        // sensor's current lifecount and can issue a sensible-range backfill
+        // request (lifecount=0 is silently ignored by the sensor).
+        requestBackfillIfNeeded(currentLifeCount: sample.lifeCount)
 
         var updated = state
         updated.latestReadingTimestamp = sample.date
@@ -121,9 +167,54 @@ extension LibreLoopCGMManager {
 
     private static var reconnectTasks: [ObjectIdentifier: Task<Void, Never>] = [:]
 
+    /// Convert each historical sample into a NewGlucoseSample (when the page
+    /// decoded mg/dL is present), push the batch to Loop's delegate, and
+    /// advance `state.lastHistoricalLifeCount` so the next backfill picks
+    /// up where we left off.
+    func handleHistoricalPage(_ page: HistoricalReadingPage) {
+        guard let activatedAt = state.activatedAt else {
+            log.info("backfill page received before activatedAt known; deferring")
+            return
+        }
+        let serial = state.sensorSerial ?? "unknown"
+        var newSamples: [NewGlucoseSample] = []
+        for sample in page.samples {
+            guard let mgdl = sample.glucoseMgDL else { continue }
+            let date = activatedAt.addingTimeInterval(TimeInterval(sample.lifeCount) * 60)
+            newSamples.append(NewGlucoseSample(
+                date: date,
+                quantity: HKQuantity(unit: .milligramsPerDeciliter, doubleValue: Double(mgdl)),
+                condition: nil,
+                trend: nil,
+                trendRate: nil,
+                isDisplayOnly: false,
+                wasUserEntered: false,
+                syncIdentifier: "libreloop-bkfill-\(serial)-\(sample.lifeCount)",
+                syncVersion: 1,
+                device: device
+            ))
+        }
+        if !newSamples.isEmpty {
+            delegateQueue?.async { [weak self] in
+                guard let self else { return }
+                self.cgmManagerDelegate?.cgmManager(self, hasNew: .newData(newSamples))
+            }
+            log.info("forwarded \(newSamples.count) backfill sample(s) to Loop")
+        }
+        // Advance the watermark to the page's end, even if no usable samples
+        // -- skipping unusable samples shouldn't cause us to re-request them.
+        var updated = state
+        let prior = updated.lastHistoricalLifeCount ?? 0
+        if page.endLifeCount > prior {
+            updated.lastHistoricalLifeCount = page.endLifeCount
+            setState(updated)
+        }
+    }
+
     private func handleMonitorDisconnect() {
-        log.warning("monitor reported disconnect; clearing and reconnecting")
+        log.notice("monitor reported disconnect; clearing and reconnecting")
         self.monitor = nil
+        self.hasRequestedBackfillThisSession = false
         cancelReconnect()
         startReconnectLoop()
     }
@@ -134,26 +225,25 @@ extension LibreLoopCGMManager {
     /// torn down). The user never has to push a button.
     private func startReconnectLoop() {
         let task = Task { [weak self] in
+            log.notice("reconnect loop: starting")
+            defer {
+                Task { @MainActor [weak self] in self?.isReconnecting = false }
+                log.notice("reconnect loop: exiting")
+            }
             while !Task.isCancelled {
                 guard let self else { return }
                 guard self.monitor == nil else { return }
                 guard self.state.blePIN != nil, self.state.sensorSerial != nil else {
                     log.error("reconnect loop: no saved state; aborting")
-                    await MainActor.run { self.isReconnecting = false }
                     return
                 }
                 await MainActor.run { self.isReconnecting = true }
                 try? await Task.sleep(nanoseconds: UInt64(Self.reconnectDelay * 1_000_000_000))
                 if Task.isCancelled { break }
                 await self.runReconnectOnce()
-                if self.monitor != nil {
-                    await MainActor.run { self.isReconnecting = false }
-                    return
-                }
+                if self.monitor != nil { return }
                 // failure -> loop back, sleep, retry. Never gives up.
             }
-            // Cancelled: make sure the indicator clears.
-            await MainActor.run { self?.isReconnecting = false }
         }
         Self.reconnectTasks[ObjectIdentifier(self)] = task
     }
@@ -171,7 +261,10 @@ extension LibreLoopCGMManager {
             return
         }
         let expectedPeripheral = state.peripheralID
-        log.info("reconnect: attempt starting (peripheralID=\(expectedPeripheral?.uuidString ?? "any"))")
+        log.notice("reconnect: attempt starting (peripheralID=\(expectedPeripheral?.uuidString ?? "any"))")
+        await MainActor.run {
+            self.lastReconnectAttemptAt = Date()
+        }
         do {
             let outcome = try await LibreLoopPairingService().reconnect(
                 blePIN: blePIN,
@@ -185,11 +278,17 @@ extension LibreLoopCGMManager {
                 forSensorSerial: serial
             )
             await MainActor.run {
+                self.lastReconnectError = nil
                 self.adopt(monitor: outcome.monitor)
             }
-            log.info("reconnect: succeeded")
+            log.notice("reconnect: succeeded")
         } catch {
-            log.error("reconnect: attempt failed: \(String(describing: error)) - looping")
+            let message = (error as? CustomStringConvertible)?.description
+                ?? error.localizedDescription
+            log.error("reconnect: attempt failed: \(message)")
+            await MainActor.run {
+                self.lastReconnectError = message
+            }
         }
     }
 
@@ -199,12 +298,13 @@ extension LibreLoopCGMManager {
     func scheduleInitialReconnect() {
         let key = ObjectIdentifier(self)
         guard Self.reconnectTasks[key] == nil else {
+            log.notice("reconnect: auto-trigger skipped (loop already running)")
             return
         }
         guard monitor == nil else {
             return
         }
-        log.info("reconnect: auto-trigger (launch or poll)")
+        log.notice("reconnect: auto-trigger (launch or poll)")
         startReconnectLoop()
     }
 

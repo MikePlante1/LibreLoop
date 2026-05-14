@@ -89,6 +89,19 @@ public final class LibreLoopCGMManager: CGMManager {
         didSet { notifyStateObservers() }
     }
 
+    /// Last reconnect-attempt failure message, surfaced in the UI under the
+    /// Bluetooth row so failures are visible without diving into Console.app.
+    /// Cleared on successful reconnect.
+    public internal(set) var lastReconnectError: String? {
+        didSet { notifyStateObservers() }
+    }
+
+    /// Wall-clock time of the most recent reconnect attempt (success or fail).
+    /// Used together with `lastReconnectError` to show "Last attempt Xs ago".
+    public internal(set) var lastReconnectAttemptAt: Date? {
+        didSet { notifyStateObservers() }
+    }
+
     func recordSample(_ sample: LibreLoopGlucoseSample) {
         latestSample = sample
         recentSamples.insert(sample, at: 0)
@@ -159,6 +172,10 @@ public final class LibreLoopCGMManager: CGMManager {
     }
 
     private var noDataWatchdog: Task<Void, Never>?
+
+    /// True once we've issued a backfill request for the current BLE session.
+    /// Reset when the monitor is cleared so the next session re-requests.
+    var hasRequestedBackfillThisSession: Bool = false
 
     public init() {
         self.state = LibreLoopCGMManagerState()

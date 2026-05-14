@@ -27,6 +27,10 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     /// "time elapsed since pair" display while we're warming up, since we
     /// don't have a reliable sensor-side warmup-remaining signal yet.
     public var lastPairedAt: Date?
+    /// Last `lifeCount` we have a backfilled glucose sample for. On each
+    /// reconnect we request `historicalBackfillGreaterEqual(this+1)` to
+    /// pull only the missed window; nil = first session, request from 0.
+    public var lastHistoricalLifeCount: UInt16?
 
     public init() {}
 
@@ -40,6 +44,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         self.latestReadingTimestamp = rawValue["latestReadingTimestamp"] as? Date
         self.firstActionableReadingAt = rawValue["firstActionableReadingAt"] as? Date
         self.lastPairedAt = rawValue["lastPairedAt"] as? Date
+        self.lastHistoricalLifeCount = (rawValue["lastHistoricalLifeCount"] as? Int).map { UInt16(clamping: $0) }
     }
 
     public var rawValue: RawValue {
@@ -53,6 +58,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         raw["latestReadingTimestamp"] = latestReadingTimestamp
         raw["firstActionableReadingAt"] = firstActionableReadingAt
         raw["lastPairedAt"] = lastPairedAt
+        raw["lastHistoricalLifeCount"] = lastHistoricalLifeCount.map { Int($0) }
         return raw
     }
 }

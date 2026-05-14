@@ -16,12 +16,19 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     public typealias ReadingHandler = @Sendable (LibreLoopGlucoseSample) -> Void
     public typealias DisconnectHandler = @Sendable () -> Void
     public typealias StatusHandler = @Sendable (String) -> Void
+    public typealias HistoricalPageHandler = @Sendable (HistoricalReadingPage) -> Void
+    /// Fires once the post-auth CCCD refresh completes and the monitor is
+    /// ready to accept commands (backfill, etc) and stream data. Use this
+    /// instead of a fixed-delay Task — CCCD refresh duration varies with
+    /// BLE conditions.
+    public typealias ReadyHandler = @Sendable () -> Void
 
     private let session: SensorSession
     // Held strongly so the underlying CBCentralManager survives past pairing.
     // SensorScanner owns the central manager + a [UUID: SensorSession] strong
     // map; dropping it tears the BLE connection down.
     private let scanner: SensorScanner
+    private let crypto: DataPlaneCrypto
     private let decoder: DataPlaneDecoder
     private let assembler = DataPlaneNotificationAssembler()
     private let lock = NSLock()
@@ -30,22 +37,32 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     private var readingHandler: ReadingHandler?
     private var disconnectHandler: DisconnectHandler?
     private var statusHandler: StatusHandler?
+    private var historicalPageHandler: HistoricalPageHandler?
+    private var readyHandler: ReadyHandler?
+    /// Per-session outbound write sequence counter, used for AES-CCM nonce
+    /// construction on PatchControl writes.
+    private var outboundSequence: UInt16 = 0
 
     init(scanner: SensorScanner, session: SensorSession, kEnc: Data, ivEnc: Data) throws {
         self.scanner = scanner
         self.session = session
         let crypto = try DataPlaneCrypto(kEnc: kEnc, ivEnc: ivEnc)
+        self.crypto = crypto
         self.decoder = DataPlaneDecoder(crypto: crypto)
     }
 
     public func setHandlers(onReading: @escaping ReadingHandler,
                             onDisconnect: @escaping DisconnectHandler,
-                            onStatus: @escaping StatusHandler = { _ in }) {
+                            onStatus: @escaping StatusHandler = { _ in },
+                            onHistoricalPage: @escaping HistoricalPageHandler = { _ in },
+                            onReady: @escaping ReadyHandler = {}) {
         lock.lock()
         defer { lock.unlock() }
         self.readingHandler = onReading
         self.disconnectHandler = onDisconnect
         self.statusHandler = onStatus
+        self.historicalPageHandler = onHistoricalPage
+        self.readyHandler = onReady
     }
 
     private func emitStatus(_ text: String) {
@@ -66,6 +83,14 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             log.info("monitor starting; refreshing post-auth notifications")
             self.emitStatus("Refreshing notifications")
             await self.refreshPostAuthNotifications()
+            // Fire ready BEFORE consuming notifications so consumers (e.g.
+            // backfill request) can race ahead of the first realtime packet
+            // and not miss notifications. Both are on the same session queue
+            // so order is preserved.
+            self.lock.lock()
+            let ready = self.readyHandler
+            self.lock.unlock()
+            ready?()
             log.info("monitor consuming session.notifications()")
             self.emitStatus("Waiting for first reading")
             var eventCount = 0
@@ -104,6 +129,40 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
         }
     }
 
+    /// Request the sensor stream all historical samples with
+    /// `lifeCount >= fromLifeCount`. Responses arrive asynchronously on
+    /// the historicData channel and are routed via `onHistoricalPage`.
+    /// Sensor stops on its own when the range is exhausted; no terminator.
+    public func requestHistoricalBackfill(fromLifeCount: UInt16) async throws {
+        // Realtime monitoring doesn't need historicData subscribed, so the
+        // default refreshDataPlaneNotifications list skips it. Backfill
+        // responses are delivered on this channel though, so enable its CCCD
+        // first or the writes go through but the pages never reach us.
+        do {
+            try await session.setNotify(true, for: LibreSensorGATT.Char.historicData, timeout: 5)
+            log.info("historicData notifications enabled for backfill")
+        } catch {
+            log.error("failed to enable historicData notifications: \(String(describing: error))")
+        }
+
+        let command = PatchControlCommand.historicalBackfillGreaterEqual(lifeCount: fromLifeCount)
+        lock.lock()
+        outboundSequence &+= 1
+        let sequence = outboundSequence
+        lock.unlock()
+        let frame = try crypto.encrypt(
+            plaintext: command.plaintext,
+            sequence: sequence,
+            kind: .patchControlWrite
+        )
+        log.notice("backfill request seq=\(sequence) >= lifeCount \(fromLifeCount)")
+        try await session.writeRaw(
+            frame.raw,
+            to: LibreSensorGATT.Char.patchControl,
+            timeout: 5.0
+        )
+    }
+
     public func stop() {
         lock.lock()
         let t = task
@@ -125,6 +184,12 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             let frame = try DataFrame.parse(fullFrame)
             let packet = try decoder.decrypt(frame: frame, channel: channel)
             switch packet.payload {
+            case .historicalReadingPage(let page):
+                log.notice("historical page startLC=\(page.startLifeCount) endLC=\(page.endLifeCount) samples=\(page.samples.count)")
+                lock.lock()
+                let handler = historicalPageHandler
+                lock.unlock()
+                handler?(page)
             case .realtimeGlucose(let reading):
                 // Build a SensorLifecycle from the reading's own age counter so
                 // the quality assessment can correctly attribute "not actionable"

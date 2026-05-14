@@ -46,15 +46,35 @@ struct LibreLoopSettingsView: View {
             LibreLoopLifecycleBar(lifecycle: viewModel.lifecycle,
                                   statusDetail: viewModel.statusDetail)
                 .padding(.vertical, 4)
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(connectionColor)
-                    .frame(width: 10, height: 10)
-                Text("Bluetooth")
-                Spacer()
-                Text(connectionLabel)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(connectionColor)
+                        .frame(width: 10, height: 10)
+                    Text("Bluetooth")
+                    Spacer()
+                    Text(connectionLabel)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                if let error = viewModel.lastReconnectError, shouldShowReconnectError {
+                    HStack(alignment: .top, spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .imageScale(.small)
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(error)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            if let at = viewModel.lastReconnectAttemptAt {
+                                Text("Last attempt \(Self.relative.localizedString(for: at, relativeTo: Date()))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                    }
+                    .padding(.leading, 18)
+                }
             }
             if let serial = viewModel.sensorSerial {
                 LabeledContent("Serial", value: serial)
@@ -153,6 +173,17 @@ struct LibreLoopSettingsView: View {
         }
     }
 
+    /// Only worth showing reconnect-error context when we're not currently
+    /// connected -- a successful session clears the error but we keep the
+    /// last value around for diagnostics; hiding it when green avoids stale
+    /// noise.
+    private var shouldShowReconnectError: Bool {
+        switch viewModel.connectionStatus {
+        case .connected, .notPaired: return false
+        default: return true
+        }
+    }
+
     private var connectionColor: Color {
         switch viewModel.connectionStatus {
         case .connected:     return .green
@@ -242,6 +273,8 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
     @Published private(set) var lifecycle: LibreLoopSensorLifecycle
     @Published private(set) var connectionStatus: LibreLoopCGMManager.ConnectionStatus
     @Published private(set) var statusDetail: String?
+    @Published private(set) var lastReconnectError: String?
+    @Published private(set) var lastReconnectAttemptAt: Date?
     @Published private(set) var latestSample: LibreLoopGlucoseSample?
     @Published private(set) var recentSamples: [LibreLoopGlucoseSample]
     @Published private(set) var sensorSerial: String?
@@ -255,6 +288,8 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
         self.lifecycle = cgmManager.sensorLifecycle
         self.connectionStatus = cgmManager.connectionStatus
         self.statusDetail = cgmManager.statusDetail
+        self.lastReconnectError = cgmManager.lastReconnectError
+        self.lastReconnectAttemptAt = cgmManager.lastReconnectAttemptAt
         self.latestSample = cgmManager.latestSample
         self.recentSamples = cgmManager.recentSamples
         self.sensorSerial = cgmManager.state.sensorSerial
@@ -289,6 +324,8 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
             self.lifecycle = manager.sensorLifecycle
             self.connectionStatus = manager.connectionStatus
             self.statusDetail = manager.statusDetail
+            self.lastReconnectError = manager.lastReconnectError
+            self.lastReconnectAttemptAt = manager.lastReconnectAttemptAt
             self.latestSample = latestSample
             self.recentSamples = manager.recentSamples
             self.sensorSerial = state.sensorSerial
