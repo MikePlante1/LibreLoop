@@ -31,7 +31,11 @@ extension LibreLoopCGMManager {
     public func applyPairingOutcome(_ outcome: LibreLoopPairingService.PairOutcome) throws {
         llog("pairing outcome applied: serial=\(outcome.result.sensorSerial) peripheral=\(outcome.peripheralID.uuidString); adopting monitor")
         try LibreLoopKeychain.save(
-            LibreLoopKeychain.SessionKeys(kEnc: outcome.result.kEnc, ivEnc: outcome.result.ivEnc),
+            LibreLoopKeychain.SessionKeys(
+                kEnc: outcome.result.kEnc,
+                ivEnc: outcome.result.ivEnc,
+                phase5RawKey: outcome.result.phase5RawKey
+            ),
             forSensorSerial: outcome.result.sensorSerial
         )
 
@@ -320,24 +324,40 @@ extension LibreLoopCGMManager {
         await MainActor.run {
             self.lastReconnectAttemptAt = Date()
         }
+        // Pull whatever we previously persisted, but reconnect can still run
+        // if Keychain has nothing — it'll just use the full handshake path.
+        let cachedPhase5 = (try? LibreLoopKeychain.load(forSensorSerial: serial))?.phase5RawKey
+        if cachedPhase5 != nil {
+            llog("reconnect: cached phase5RawKey available; will try fast path first")
+        } else {
+            llog("reconnect: no cached phase5RawKey (legacy sensor or pre-fast-path pair); full handshake path only")
+        }
         do {
             let outcome = try await LibreLoopPairingService().reconnect(
                 scanner: scanner,
                 blePIN: blePIN,
+                phase5RawKey: cachedPhase5,
                 expectedPeripheralID: expectedPeripheral
             ) { [weak self] stage in
                 llog("reconnect stage: \(String(describing: stage))")
                 self?.updateStatusDetail(Self.statusText(for: stage))
             }
+            // If the fallback handshake re-derived a fresh phase5RawKey,
+            // persist it. Cached path returns nil here (no re-derivation).
+            let phase5ToPersist = outcome.phase5RawKey ?? cachedPhase5
             try LibreLoopKeychain.save(
-                LibreLoopKeychain.SessionKeys(kEnc: outcome.kEnc, ivEnc: outcome.ivEnc),
+                LibreLoopKeychain.SessionKeys(
+                    kEnc: outcome.kEnc,
+                    ivEnc: outcome.ivEnc,
+                    phase5RawKey: phase5ToPersist
+                ),
                 forSensorSerial: serial
             )
             await MainActor.run {
                 self.lastReconnectError = nil
                 self.adopt(monitor: outcome.monitor)
             }
-            llog("reconnect: succeeded")
+            llog("reconnect: succeeded via \(outcome.path == .cached ? "cached/direct" : "full") path")
         } catch {
             let message = (error as? CustomStringConvertible)?.description
                 ?? error.localizedDescription

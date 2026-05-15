@@ -20,6 +20,11 @@ public final class LibreLoopPairingService {
         public let activatedAt: Date
         public let kEnc: Data
         public let ivEnc: Data
+        /// Phase 5 raw key from first-pair handshake. Needed for the
+        /// `runCachedReconnectHandshake` fast-path on subsequent reconnects;
+        /// callers must persist this alongside kEnc/ivEnc. Nil only on
+        /// legacy/cached reconnect outcomes where the value isn't re-derived.
+        public let phase5RawKey: Data?
     }
 
     /// Intermediate state captured immediately after a successful NFC
@@ -73,17 +78,24 @@ public final class LibreLoopPairingService {
 
     public init() {}
 
-    /// Re-establish a BLE session against an already-paired sensor using the
-    /// saved BLE PIN. No NFC -- this is what gets called when the BLE link
-    /// drops mid-session (sensor went out of range, iOS reaped the link, etc).
+    /// Re-establish a BLE session against an already-paired sensor.
     ///
-    /// LibreCRKit has no reconnect-with-saved-keys API, so we re-run the
-    /// candidate first-pair handshake against the same blePIN. The sensor
-    /// accepts the same PIN until another A8 burns it. Each reconnect
-    /// produces fresh kEnc/ivEnc, which the caller must persist.
+    /// If `phase5RawKey` is non-nil (saved from a prior successful pair on
+    /// this app), tries LibreCRKit's `runCachedReconnectHandshake` first:
+    /// `0x11 StartAuthorization` → `R1/nonce notify` → Phase 5 (using the
+    /// cached raw key) → `0x08` → Phase 6. Skips cert + ephemeral exchange,
+    /// trimming the handshake from 8 BLE commands to 2.
+    ///
+    /// If the cached path fails before Phase 6 (or `phase5RawKey` is nil),
+    /// falls back to the full first-pair-style handshake against the saved
+    /// blePIN. Each reconnect produces fresh kEnc/ivEnc that the caller
+    /// must persist; the fast/cached path also returns a new phase5RawKey
+    /// on success only when the fallback ran (cached reuses the existing
+    /// one).
     public func reconnect(
         scanner: SensorScanner,
         blePIN: Data,
+        phase5RawKey: Data? = nil,
         expectedPeripheralID: UUID? = nil,
         scanTimeout: TimeInterval = 120,
         onStage: @Sendable @escaping (Stage) -> Void = { _ in }
@@ -124,6 +136,38 @@ public final class LibreLoopPairingService {
 
         onStage(.handshaking)
         let transport = SensorSessionTransport(session: session)
+
+        // Try the upstream cached/direct reconnect first if we have material
+        // for it. On any failure short-circuits to the full handshake path
+        // below -- upstream's guidance is "if it is rejected before Phase 6,
+        // fall back to the full authorization path".
+        if let phase5RawKey {
+            let cachedFlow = PairingFlow(transport: transport, eventLogger: nil)
+            do {
+                let cached = try await cachedFlow.runCachedReconnectHandshake(
+                    tail4: blePIN,
+                    phase5RawKey: phase5RawKey,
+                    r2Provider: { try Self.secureRandomBytes(count: 16) }
+                )
+                let material = cached.sessionMaterial
+                let monitor = try LibreLoopSensorMonitor.make(
+                    scanner: scanner,
+                    session: session,
+                    kEnc: material.kEnc,
+                    ivEnc: material.ivEnc
+                )
+                return ReconnectOutcome(
+                    monitor: monitor,
+                    kEnc: material.kEnc,
+                    ivEnc: material.ivEnc,
+                    phase5RawKey: nil,
+                    path: .cached
+                )
+            } catch {
+                // Continue to full-handshake fallback below.
+            }
+        }
+
         let phoneCert = try Self.loadBundled162bCert()
         let nativeEphemeral = try SessionKey.makeFirstPairNativeEphemeral(
             entropySource: Self.secureRandomBytes(count:)
@@ -159,13 +203,25 @@ public final class LibreLoopPairingService {
             kEnc: material.kEnc,
             ivEnc: material.ivEnc
         )
-        return ReconnectOutcome(monitor: monitor, kEnc: material.kEnc, ivEnc: material.ivEnc)
+        return ReconnectOutcome(
+            monitor: monitor,
+            kEnc: material.kEnc,
+            ivEnc: material.ivEnc,
+            phase5RawKey: handshake.phase5Material.rawKey,
+            path: .fullFallback
+        )
     }
 
     public struct ReconnectOutcome {
         public let monitor: LibreLoopSensorMonitor
         public let kEnc: Data
         public let ivEnc: Data
+        /// Newly-derived Phase 5 raw key when the full fallback path runs;
+        /// nil when the cached/direct path succeeded (reuses the existing
+        /// cached key, no re-derivation).
+        public let phase5RawKey: Data?
+        public let path: Path
+        public enum Path: Sendable, Equatable { case cached, fullFallback }
     }
 
     public struct PairOutcome {
@@ -301,7 +357,8 @@ public final class LibreLoopPairingService {
             blePIN: activation.blePIN,
             activatedAt: nfcResponse.activatedAt ?? Date(),
             kEnc: material.kEnc,
-            ivEnc: material.ivEnc
+            ivEnc: material.ivEnc,
+            phase5RawKey: handshake.phase5Material.rawKey
         )
         let monitor = try LibreLoopSensorMonitor.make(
             scanner: scanner,

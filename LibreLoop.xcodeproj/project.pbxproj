@@ -7,90 +7,90 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0C5C11E982B01D1209811B20 /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6F337187354AD84B57977DD /* LibreLoop.framework */; };
-		0D9D6642EC02413176624698 /* LibreLoopCGMManager+Observers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03B776AA72CC4BE3F03EB32D /* LibreLoopCGMManager+Observers.swift */; };
-		1180C87AF54B510ABC3E6B01 /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6F337187354AD84B57977DD /* LibreLoop.framework */; };
-		119D17BD1445B1A7930137BD /* LibreLoopSensorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCE845794A654AA817748359 /* LibreLoopSensorMonitor.swift */; };
-		2626B4C1CAA31E0800353D0A /* LibreLoopPairingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E43996F701BA8B5850C004E1 /* LibreLoopPairingProgressView.swift */; };
-		2CADFFB19D7D56775AAC5D6E /* LibreLoopCGMManagerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E252C62111AA5B14A5D88CB2 /* LibreLoopCGMManagerStateTests.swift */; };
-		3D8DC31D6FD0D09E43A6D0CD /* LibreLoopUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3E9EC48901FFDE7BCD6CDCE9 /* LibreLoopUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		3E7F7A63465756C1D37129F0 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D07F60FE65E64F39A8E0ED /* Foundation.framework */; };
-		4025967DF373556C5ABDD950 /* LibreLoopCGMManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A03C190722839E0FCF34E8 /* LibreLoopCGMManagerState.swift */; };
-		440E209AB1921AE9C6406B91 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88D93E704CA5D8039FD30474 /* LoopKit.framework */; };
-		59335144E245EF416CB7A557 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88D93E704CA5D8039FD30474 /* LoopKit.framework */; };
-		5B5732B7C42D0BE08733B049 /* LibreLoopScanHelpPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C69EC93F0B8AD126CA2106FF /* LibreLoopScanHelpPagerView.swift */; };
-		5CBBFD51F4D8B6633D9B720E /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DC3DE02AC91B7434469ED51 /* LoopKitUI.framework */; };
-		5E5B0E29958B891E502CED1D /* LibreLoopScanSensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3F88CBBA8B5EBCB066ADE63 /* LibreLoopScanSensorView.swift */; };
-		66B97565FCEF21937213AB89 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D07F60FE65E64F39A8E0ED /* Foundation.framework */; };
-		688B785969B2C07A5673BAFF /* LibreLoopKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5561E8DE4D6F62DDF4A42E16 /* LibreLoopKeychain.swift */; };
-		6AFB464E93DD1F41A3FB6BBB /* LibreLoopUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E9EC48901FFDE7BCD6CDCE9 /* LibreLoopUI.framework */; };
-		739A2DFB410BE152F2CE8A96 /* LibreCRKit_LibreCRKit.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 53E10E90E560B9A9B3FB79F1 /* LibreCRKit_LibreCRKit.bundle */; };
-		74214F755A9BBF3152BA1268 /* LibreLoop.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D6F337187354AD84B57977DD /* LibreLoop.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		7FB7140169C8C9D9A2DBE38D /* LibreLoopApplyHelpPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D767B7B0CA1A058E269FB49E /* LibreLoopApplyHelpPagerView.swift */; };
-		828CCC9CAC2115E7798EA1F5 /* LibreLoopSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA14BC041554A44DE3A34EA /* LibreLoopSettingsView.swift */; };
-		899CF4B0E6D134AD773EDC79 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D07F60FE65E64F39A8E0ED /* Foundation.framework */; };
-		93795EA5C3E3A733EDA14A3E /* LibreLoopApplySensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BA859757F2E383689ECCC37 /* LibreLoopApplySensorView.swift */; };
-		95122893013B32CEB35A4721 /* LibreLoopCGMManager+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = B167E8D5904850C683EEA37E /* LibreLoopCGMManager+UI.swift */; };
-		9EC05D7D084306E98E2DD805 /* LibreLoopCGMManager+Pairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C8E59732E9E557066E83909 /* LibreLoopCGMManager+Pairing.swift */; };
-		A4D20527263D08BA718BEDB5 /* LibreLoopPairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F88D665A07CC09C6372AB084 /* LibreLoopPairingViewModel.swift */; };
-		B6FB39A960CC7934BFFB7A30 /* LibreLoopCGMManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5A8F8B89E2C9B67A7510FF9 /* LibreLoopCGMManager.swift */; };
-		B79C14E8029C9CE8B699D54C /* phone_cert_162b.bin in Resources */ = {isa = PBXBuildFile; fileRef = F3F905EE42D7B134E8F0CE68 /* phone_cert_162b.bin */; };
-		BF3C66719B70EFEE0FC0F7F1 /* LibreLoopLifecycleBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C842809A61D26673DB4DEB /* LibreLoopLifecycleBar.swift */; };
-		C7F56EE14A528F0374167695 /* LibreCRKit in Frameworks */ = {isa = PBXBuildFile; productRef = 77859E89400CDCC13F49E174 /* LibreCRKit */; };
-		CBEFB83913E4730E4BCCE1A8 /* LibreLoopPairingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599EC1341AD6A7AA3880BDA4 /* LibreLoopPairingService.swift */; };
-		CD3572436D448D191B463555 /* LibreLoopGlucoseSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AA3657645321BC9DB038EB5 /* LibreLoopGlucoseSample.swift */; };
-		D2B55573EAA60A1048FB1C0D /* LibreLoopUICoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9830D9AF13439A6045C51D07 /* LibreLoopUICoordinator.swift */; };
-		D50C9C609A05A5FCE7CEB7B1 /* LibreLoopRecoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1416E24E106E7DCFF4955D7E /* LibreLoopRecoveryView.swift */; };
-		D72BA15A973340232AD494C4 /* LibreLoopFileLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F24B9B8F52549F740E0CA10 /* LibreLoopFileLogger.swift */; };
-		D7712FB18A17E2D0CC4B5615 /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6F337187354AD84B57977DD /* LibreLoop.framework */; };
-		DFFC4876F5A44C3350E536B5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7D07F60FE65E64F39A8E0ED /* Foundation.framework */; };
-		E04FE22C43CACBAE8ED5071D /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DC3DE02AC91B7434469ED51 /* LoopKitUI.framework */; };
-		ED052A2785122A674EDB055B /* LibreLoopPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD2D94403178E6D52D8ADFA4 /* LibreLoopPlugin.swift */; };
-		FCF3F91298C3FDCC2CE2AAAA /* LibreLoopSensorLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183D61E2B42FA07AE00AEC88 /* LibreLoopSensorLifecycle.swift */; };
-		FE24586E2EDBBD25ECD23D39 /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED3EAC4D87BE4EDAB85ED93C /* HKUnit.swift */; };
-		FFD53D0D0371298D4B48B5A0 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 88D93E704CA5D8039FD30474 /* LoopKit.framework */; };
+		0ABBFADC1693B9C197E086A1 /* LibreLoopCGMManager+Observers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8452088B6268131D8F7114FE /* LibreLoopCGMManager+Observers.swift */; };
+		0BD449348D3A37F39E5E32DB /* LibreLoopPairingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0070D952DE76BD31DE1370E1 /* LibreLoopPairingService.swift */; };
+		1230B290A140EF5E41B41D27 /* LibreLoop.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		1A4982D92949386D954F273B /* LibreLoopLifecycleBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2428756BA5E08BDD15379DDA /* LibreLoopLifecycleBar.swift */; };
+		1EAB0EE447DFB31CA9CBF135 /* LibreLoopUICoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A10F29A35971353333E9064 /* LibreLoopUICoordinator.swift */; };
+		20C4F6A2A8380D39558FA97C /* LibreLoopGlucoseSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4085CCFB84DDC03915D91D58 /* LibreLoopGlucoseSample.swift */; };
+		20C94ADAF8925B373E51AF94 /* LibreLoopApplySensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A9C3AF1D23EC9195402B7F5 /* LibreLoopApplySensorView.swift */; };
+		215DA0295F6D024F90A01632 /* LibreLoopSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100CE735F47D57B5FA7413C8 /* LibreLoopSettingsView.swift */; };
+		24F3D8F39CC6FDA2001408F2 /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */; };
+		25E4D12BE3914B4768E893C0 /* phone_cert_162b.bin in Resources */ = {isa = PBXBuildFile; fileRef = DD3BAAE0AF2C21CE626E59EF /* phone_cert_162b.bin */; };
+		331932831902A2F27E0086EE /* LibreLoopUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = B3C3362F1B2A912F1258967D /* LibreLoopUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		34D264324310C36199A86792 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 388DFC296D676B5BEFE44613 /* Foundation.framework */; };
+		38F2181DA33C69244A5F08C1 /* LibreLoopCGMManagerStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4144FA7C50237817428A018A /* LibreLoopCGMManagerStateTests.swift */; };
+		390C03E85584273C8F9DA1CA /* LibreLoopRecoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CFBAA5CAD1D22D046B22FB /* LibreLoopRecoveryView.swift */; };
+		3A50C27426990E0C7FFD7DEA /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */; };
+		411D668B5F341A37809E7E62 /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B95312B4D2E8CF8CF391AAC3 /* LoopKit.framework */; };
+		457AD097E357CE2BCA8F31A7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 388DFC296D676B5BEFE44613 /* Foundation.framework */; };
+		461B3D7C97359D9104907C77 /* LibreLoopCGMManager+Pairing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A74FE37D1C0618434D7960C7 /* LibreLoopCGMManager+Pairing.swift */; };
+		4910551BD8245BA3D4FA065C /* LibreCRKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5060451D8875EE84A2C2EE70 /* LibreCRKit */; };
+		69424DB4D71C688EDA436636 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 388DFC296D676B5BEFE44613 /* Foundation.framework */; };
+		6FFB5D8140E94F1533EE5855 /* LibreLoopScanHelpPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E32E882B939E1BC48A40A4C7 /* LibreLoopScanHelpPagerView.swift */; };
+		738C370EFFDD9AF1FB8A6DF7 /* LibreLoopSensorLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F542F832162426A5F0EC9210 /* LibreLoopSensorLifecycle.swift */; };
+		78FC2DE3AA50ED0F525A69E9 /* LibreLoopPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AE6ED876ADB4247B025A77B /* LibreLoopPlugin.swift */; };
+		79AC59290A75B4E47D90733C /* LibreLoopApplyHelpPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1557E0B65574E189DBD7B0DA /* LibreLoopApplyHelpPagerView.swift */; };
+		8360FC3C2ACF4C68DB3E7F15 /* LibreLoopCGMManagerState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D8E8DDDB5204E5C08C788E /* LibreLoopCGMManagerState.swift */; };
+		9308125A660BC4A88968B662 /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71884901E8DB73722D32ADAB /* LoopKitUI.framework */; };
+		937F0BB79ACF4393CF5F45CE /* LibreLoop.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */; };
+		9996E24298FE449E27A307DC /* HKUnit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DBE3AE66BACEED082C2D546 /* HKUnit.swift */; };
+		9A362C00EFFBFE0207A6E867 /* LibreLoopKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEAFE6C464DF655109797AA2 /* LibreLoopKeychain.swift */; };
+		A7DBC23B1AD8DBF8C5B9D287 /* LibreLoopCGMManager+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEACB01B83CC3A11F1B5007B /* LibreLoopCGMManager+UI.swift */; };
+		A824B4A4F5CD70D5B01A4C82 /* LibreLoopPairingProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA121B4A21D6D034B2924357 /* LibreLoopPairingProgressView.swift */; };
+		A88C715A4341F74AEE7B5CF2 /* LibreLoopScanSensorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEB7AB0D9CA13D06215D8CCA /* LibreLoopScanSensorView.swift */; };
+		B39EE3DAFF4E58957E13020F /* LibreLoopUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B3C3362F1B2A912F1258967D /* LibreLoopUI.framework */; };
+		B7AADA04930C2D1D69F75DEA /* LibreLoopPairingViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ED373C572771BE2E84D912A /* LibreLoopPairingViewModel.swift */; };
+		BCE60BF7AB38047FADECD5C7 /* LibreLoopSensorMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F703124FB1A46C5B198F6325 /* LibreLoopSensorMonitor.swift */; };
+		C598F432366029891C73E423 /* LibreCRKit_LibreCRKit.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 69D27B2C9AA44B9C21FE07AA /* LibreCRKit_LibreCRKit.bundle */; };
+		CE1C32FC5EE93595B198B30B /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 71884901E8DB73722D32ADAB /* LoopKitUI.framework */; };
+		D1D783767818B2808146B3C6 /* LibreLoopFileLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A076F1337DD8ED12504AB7B /* LibreLoopFileLogger.swift */; };
+		D6ABE4066E1753B4AE2E97F5 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 388DFC296D676B5BEFE44613 /* Foundation.framework */; };
+		E10B7E7458A91320780ADD2E /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B95312B4D2E8CF8CF391AAC3 /* LoopKit.framework */; };
+		F3EC60356F0D7FED4D06CF33 /* LibreLoopCGMManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 374B143DAEA016D4B7F94587 /* LibreLoopCGMManager.swift */; };
+		FA33C4924C4390824B9EC2FB /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B95312B4D2E8CF8CF391AAC3 /* LoopKit.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		359A418EC119F03990FFF0B0 /* PBXContainerItemProxy */ = {
+		8A9E0DB827C977C400EA8024 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = E9464FBE7194B52B74CC89A1 /* Project object */;
+			containerPortal = 3B4B2E98CBE2F3195601250A /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 001DDFA155E5FDEFF6CAE9D3;
+			remoteGlobalIDString = 33D8D4A72CA19C7891308C07;
+			remoteInfo = LibreLoop;
+		};
+		8B53EEBF07B524982CD88550 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3B4B2E98CBE2F3195601250A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 497DD3917D775AF3C8964504;
 			remoteInfo = LibreLoopUI;
 		};
-		3AC7198F512CBAEDBB566276 /* PBXContainerItemProxy */ = {
+		CCAC2CF48557879D1FFEBBA0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = E9464FBE7194B52B74CC89A1 /* Project object */;
+			containerPortal = 3B4B2E98CBE2F3195601250A /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = D7B6234D99FE587C7F8C9EB2;
+			remoteGlobalIDString = 33D8D4A72CA19C7891308C07;
 			remoteInfo = LibreLoop;
 		};
-		575981F590371C2361FC2239 /* PBXContainerItemProxy */ = {
+		CE737BE7813BA93E8236D578 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = E9464FBE7194B52B74CC89A1 /* Project object */;
+			containerPortal = 3B4B2E98CBE2F3195601250A /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = D7B6234D99FE587C7F8C9EB2;
-			remoteInfo = LibreLoop;
-		};
-		866F26D3DDFD1C999F9DDEAF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E9464FBE7194B52B74CC89A1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = D7B6234D99FE587C7F8C9EB2;
+			remoteGlobalIDString = 33D8D4A72CA19C7891308C07;
 			remoteInfo = LibreLoop;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F923326AC7EA18E097692A6E /* Embed Frameworks */ = {
+		96A94EFDFD433EF591395486 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				74214F755A9BBF3152BA1268 /* LibreLoop.framework in Embed Frameworks */,
-				3D8DC31D6FD0D09E43A6D0CD /* LibreLoopUI.framework in Embed Frameworks */,
+				1230B290A140EF5E41B41D27 /* LibreLoop.framework in Embed Frameworks */,
+				331932831902A2F27E0086EE /* LibreLoopUI.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -98,284 +98,284 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		03B776AA72CC4BE3F03EB32D /* LibreLoopCGMManager+Observers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+Observers.swift"; sourceTree = "<group>"; };
-		0DC3DE02AC91B7434469ED51 /* LoopKitUI.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		12C842809A61D26673DB4DEB /* LibreLoopLifecycleBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopLifecycleBar.swift; sourceTree = "<group>"; };
-		1416E24E106E7DCFF4955D7E /* LibreLoopRecoveryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopRecoveryView.swift; sourceTree = "<group>"; };
-		14771C3613F55375E3BC78F6 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		183D61E2B42FA07AE00AEC88 /* LibreLoopSensorLifecycle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSensorLifecycle.swift; sourceTree = "<group>"; };
-		1AA3657645321BC9DB038EB5 /* LibreLoopGlucoseSample.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopGlucoseSample.swift; sourceTree = "<group>"; };
-		2C8E59732E9E557066E83909 /* LibreLoopCGMManager+Pairing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+Pairing.swift"; sourceTree = "<group>"; };
-		3BA14BC041554A44DE3A34EA /* LibreLoopSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSettingsView.swift; sourceTree = "<group>"; };
-		3E9EC48901FFDE7BCD6CDCE9 /* LibreLoopUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoopUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		45083CD90AA5FDE86A62A518 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
-		4F24B9B8F52549F740E0CA10 /* LibreLoopFileLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopFileLogger.swift; sourceTree = "<group>"; };
-		524381F0160E130163EB397D /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		53E10E90E560B9A9B3FB79F1 /* LibreCRKit_LibreCRKit.bundle */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LibreCRKit_LibreCRKit.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		5561E8DE4D6F62DDF4A42E16 /* LibreLoopKeychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopKeychain.swift; sourceTree = "<group>"; };
-		599EC1341AD6A7AA3880BDA4 /* LibreLoopPairingService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingService.swift; sourceTree = "<group>"; };
-		59A03C190722839E0FCF34E8 /* LibreLoopCGMManagerState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManagerState.swift; sourceTree = "<group>"; };
-		6BA859757F2E383689ECCC37 /* LibreLoopApplySensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopApplySensorView.swift; sourceTree = "<group>"; };
-		6D73506B757AFD2AE5911A95 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
-		88D93E704CA5D8039FD30474 /* LoopKit.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		9830D9AF13439A6045C51D07 /* LibreLoopUICoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopUICoordinator.swift; sourceTree = "<group>"; };
-		9F83C3C0201BC1B1DA5139E8 /* LibreLoopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibreLoopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A7D07F60FE65E64F39A8E0ED /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		AD2D94403178E6D52D8ADFA4 /* LibreLoopPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPlugin.swift; sourceTree = "<group>"; };
-		B167E8D5904850C683EEA37E /* LibreLoopCGMManager+UI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+UI.swift"; sourceTree = "<group>"; };
-		C69EC93F0B8AD126CA2106FF /* LibreLoopScanHelpPagerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopScanHelpPagerView.swift; sourceTree = "<group>"; };
-		CCE845794A654AA817748359 /* LibreLoopSensorMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSensorMonitor.swift; sourceTree = "<group>"; };
-		D6F337187354AD84B57977DD /* LibreLoop.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoop.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		D767B7B0CA1A058E269FB49E /* LibreLoopApplyHelpPagerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopApplyHelpPagerView.swift; sourceTree = "<group>"; };
-		E252C62111AA5B14A5D88CB2 /* LibreLoopCGMManagerStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManagerStateTests.swift; sourceTree = "<group>"; };
-		E3F88CBBA8B5EBCB066ADE63 /* LibreLoopScanSensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopScanSensorView.swift; sourceTree = "<group>"; };
-		E43996F701BA8B5850C004E1 /* LibreLoopPairingProgressView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingProgressView.swift; sourceTree = "<group>"; };
-		E5A8F8B89E2C9B67A7510FF9 /* LibreLoopCGMManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManager.swift; sourceTree = "<group>"; };
-		ED3EAC4D87BE4EDAB85ED93C /* HKUnit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HKUnit.swift; sourceTree = "<group>"; };
-		F3F905EE42D7B134E8F0CE68 /* phone_cert_162b.bin */ = {isa = PBXFileReference; includeInIndex = 1; path = phone_cert_162b.bin; sourceTree = "<group>"; };
-		F88D665A07CC09C6372AB084 /* LibreLoopPairingViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingViewModel.swift; sourceTree = "<group>"; };
-		F8C952D50024EB39D4A9F98F /* LibreLoopPlugin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoopPlugin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		0070D952DE76BD31DE1370E1 /* LibreLoopPairingService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingService.swift; sourceTree = "<group>"; };
+		100CE735F47D57B5FA7413C8 /* LibreLoopSettingsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSettingsView.swift; sourceTree = "<group>"; };
+		1557E0B65574E189DBD7B0DA /* LibreLoopApplyHelpPagerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopApplyHelpPagerView.swift; sourceTree = "<group>"; };
+		2428756BA5E08BDD15379DDA /* LibreLoopLifecycleBar.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopLifecycleBar.swift; sourceTree = "<group>"; };
+		2A9C3AF1D23EC9195402B7F5 /* LibreLoopApplySensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopApplySensorView.swift; sourceTree = "<group>"; };
+		33CFBAA5CAD1D22D046B22FB /* LibreLoopRecoveryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopRecoveryView.swift; sourceTree = "<group>"; };
+		34F44E0662CB49936E0AA2D0 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		374B143DAEA016D4B7F94587 /* LibreLoopCGMManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManager.swift; sourceTree = "<group>"; };
+		388DFC296D676B5BEFE44613 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		4085CCFB84DDC03915D91D58 /* LibreLoopGlucoseSample.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopGlucoseSample.swift; sourceTree = "<group>"; };
+		4144FA7C50237817428A018A /* LibreLoopCGMManagerStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManagerStateTests.swift; sourceTree = "<group>"; };
+		4583D27239600CF4752BE291 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
+		46D8E8DDDB5204E5C08C788E /* LibreLoopCGMManagerState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopCGMManagerState.swift; sourceTree = "<group>"; };
+		4ED373C572771BE2E84D912A /* LibreLoopPairingViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingViewModel.swift; sourceTree = "<group>"; };
+		5A076F1337DD8ED12504AB7B /* LibreLoopFileLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopFileLogger.swift; sourceTree = "<group>"; };
+		668DBCA7596C373BD2E83E51 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
+		69D27B2C9AA44B9C21FE07AA /* LibreCRKit_LibreCRKit.bundle */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LibreCRKit_LibreCRKit.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		71884901E8DB73722D32ADAB /* LoopKitUI.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7DBE3AE66BACEED082C2D546 /* HKUnit.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HKUnit.swift; sourceTree = "<group>"; };
+		8452088B6268131D8F7114FE /* LibreLoopCGMManager+Observers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+Observers.swift"; sourceTree = "<group>"; };
+		8A10F29A35971353333E9064 /* LibreLoopUICoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopUICoordinator.swift; sourceTree = "<group>"; };
+		8AE6ED876ADB4247B025A77B /* LibreLoopPlugin.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPlugin.swift; sourceTree = "<group>"; };
+		A74FE37D1C0618434D7960C7 /* LibreLoopCGMManager+Pairing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+Pairing.swift"; sourceTree = "<group>"; };
+		B3C3362F1B2A912F1258967D /* LibreLoopUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoopUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B6755F8D75BCCBCCF619B34D /* LibreLoopPlugin.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoopPlugin.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B95312B4D2E8CF8CF391AAC3 /* LoopKit.framework */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LibreLoop.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD3BAAE0AF2C21CE626E59EF /* phone_cert_162b.bin */ = {isa = PBXFileReference; includeInIndex = 1; path = phone_cert_162b.bin; sourceTree = "<group>"; };
+		DD5BA17BB5126A8AF8899C27 /* LibreLoopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibreLoopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DEAFE6C464DF655109797AA2 /* LibreLoopKeychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopKeychain.swift; sourceTree = "<group>"; };
+		DEB7AB0D9CA13D06215D8CCA /* LibreLoopScanSensorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopScanSensorView.swift; sourceTree = "<group>"; };
+		E32E882B939E1BC48A40A4C7 /* LibreLoopScanHelpPagerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopScanHelpPagerView.swift; sourceTree = "<group>"; };
+		EA121B4A21D6D034B2924357 /* LibreLoopPairingProgressView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopPairingProgressView.swift; sourceTree = "<group>"; };
+		F3E27391F00192D1B8546B20 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Platforms/iPhoneOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		F542F832162426A5F0EC9210 /* LibreLoopSensorLifecycle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSensorLifecycle.swift; sourceTree = "<group>"; };
+		F703124FB1A46C5B198F6325 /* LibreLoopSensorMonitor.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreLoopSensorMonitor.swift; sourceTree = "<group>"; };
+		FEACB01B83CC3A11F1B5007B /* LibreLoopCGMManager+UI.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+UI.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		0B0677EE09041F42AE2B994F /* Frameworks */ = {
+		30E65382E2928EA728B88CF3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E7F7A63465756C1D37129F0 /* Foundation.framework in Frameworks */,
-				1180C87AF54B510ABC3E6B01 /* LibreLoop.framework in Frameworks */,
-				6AFB464E93DD1F41A3FB6BBB /* LibreLoopUI.framework in Frameworks */,
-				440E209AB1921AE9C6406B91 /* LoopKit.framework in Frameworks */,
-				5CBBFD51F4D8B6633D9B720E /* LoopKitUI.framework in Frameworks */,
+				457AD097E357CE2BCA8F31A7 /* Foundation.framework in Frameworks */,
+				24F3D8F39CC6FDA2001408F2 /* LibreLoop.framework in Frameworks */,
+				FA33C4924C4390824B9EC2FB /* LoopKit.framework in Frameworks */,
+				CE1C32FC5EE93595B198B30B /* LoopKitUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		49B5D384643363C1F26C094E /* Frameworks */ = {
+		51971BC15269E946DE3FAC8E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				899CF4B0E6D134AD773EDC79 /* Foundation.framework in Frameworks */,
-				59335144E245EF416CB7A557 /* LoopKit.framework in Frameworks */,
-				C7F56EE14A528F0374167695 /* LibreCRKit in Frameworks */,
+				69424DB4D71C688EDA436636 /* Foundation.framework in Frameworks */,
+				3A50C27426990E0C7FFD7DEA /* LibreLoop.framework in Frameworks */,
+				B39EE3DAFF4E58957E13020F /* LibreLoopUI.framework in Frameworks */,
+				411D668B5F341A37809E7E62 /* LoopKit.framework in Frameworks */,
+				9308125A660BC4A88968B662 /* LoopKitUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		74243546A8F04C6A64CC215A /* Frameworks */ = {
+		9F81066DBD4BBCF7296172CC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				66B97565FCEF21937213AB89 /* Foundation.framework in Frameworks */,
-				D7712FB18A17E2D0CC4B5615 /* LibreLoop.framework in Frameworks */,
-				FFD53D0D0371298D4B48B5A0 /* LoopKit.framework in Frameworks */,
-				E04FE22C43CACBAE8ED5071D /* LoopKitUI.framework in Frameworks */,
+				34D264324310C36199A86792 /* Foundation.framework in Frameworks */,
+				937F0BB79ACF4393CF5F45CE /* LibreLoop.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C67701E05177848F21CE95A0 /* Frameworks */ = {
+		C62F620A0F6B5C3F2BF718C1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DFFC4876F5A44C3350E536B5 /* Foundation.framework in Frameworks */,
-				0C5C11E982B01D1209811B20 /* LibreLoop.framework in Frameworks */,
+				D6ABE4066E1753B4AE2E97F5 /* Foundation.framework in Frameworks */,
+				E10B7E7458A91320780ADD2E /* LoopKit.framework in Frameworks */,
+				4910551BD8245BA3D4FA065C /* LibreCRKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		07FCFEC8ACC9884AFE148FE8 /* LibreLoopCGMManager */ = {
+		03DC5A7CE75CE39EBEB70ECC /* iOS */ = {
 			isa = PBXGroup;
 			children = (
-				03B776AA72CC4BE3F03EB32D /* LibreLoopCGMManager+Observers.swift */,
-				E5A8F8B89E2C9B67A7510FF9 /* LibreLoopCGMManager.swift */,
-				59A03C190722839E0FCF34E8 /* LibreLoopCGMManagerState.swift */,
-			);
-			name = LibreLoopCGMManager;
-			path = LibreLoopCGMManager;
-			sourceTree = "<group>";
-		};
-		11D03C0DA903AD5B1EA9CA33 /* Sensor */ = {
-			isa = PBXGroup;
-			children = (
-				1AA3657645321BC9DB038EB5 /* LibreLoopGlucoseSample.swift */,
-				183D61E2B42FA07AE00AEC88 /* LibreLoopSensorLifecycle.swift */,
-				CCE845794A654AA817748359 /* LibreLoopSensorMonitor.swift */,
-			);
-			name = Sensor;
-			path = Sensor;
-			sourceTree = "<group>";
-		};
-		2327988862F2F292AF28D4B6 /* Common */ = {
-			isa = PBXGroup;
-			children = (
-				ED3EAC4D87BE4EDAB85ED93C /* HKUnit.swift */,
-				4F24B9B8F52549F740E0CA10 /* LibreLoopFileLogger.swift */,
-			);
-			name = Common;
-			path = Common;
-			sourceTree = "<group>";
-		};
-		27AC7D93C65F1E2D1C27D9B7 /* LibreLoopCGMManager */ = {
-			isa = PBXGroup;
-			children = (
-				B167E8D5904850C683EEA37E /* LibreLoopCGMManager+UI.swift */,
-				9830D9AF13439A6045C51D07 /* LibreLoopUICoordinator.swift */,
-			);
-			name = LibreLoopCGMManager;
-			path = LibreLoopCGMManager;
-			sourceTree = "<group>";
-		};
-		2A69F33C6A141AB1D083F167 = {
-			isa = PBXGroup;
-			children = (
-				50EDCD985A333A24FBBC5574 /* Products */,
-				654BCB7B8B7E08284439F536 /* Frameworks */,
-				31A3873B0851D902EB5ED62B /* LibreLoop */,
-				57723554E2892B78A3E2C0AB /* LibreLoopUI */,
-				786B1F5866603EC5A59F9655 /* LibreLoopPlugin */,
-				EB40BD7EFBE947B925D737FF /* LibreLoopTests */,
-				45083CD90AA5FDE86A62A518 /* LICENSE */,
-				6D73506B757AFD2AE5911A95 /* README.md */,
-			);
-			sourceTree = "<group>";
-		};
-		2B492AD3E2455E0D18132014 /* iOS */ = {
-			isa = PBXGroup;
-			children = (
-				A7D07F60FE65E64F39A8E0ED /* Foundation.framework */,
+				388DFC296D676B5BEFE44613 /* Foundation.framework */,
 			);
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		31A3873B0851D902EB5ED62B /* LibreLoop */ = {
+		0407CEE47417C29EC03B5527 /* LibreLoopTests */ = {
 			isa = PBXGroup;
 			children = (
-				2327988862F2F292AF28D4B6 /* Common */,
-				07FCFEC8ACC9884AFE148FE8 /* LibreLoopCGMManager */,
-				7C1E1BE5FF5BA575625DBAA1 /* Pairing */,
-				11D03C0DA903AD5B1EA9CA33 /* Sensor */,
-				F5E1C39857D32E1CA38A8387 /* Resources */,
-			);
-			name = LibreLoop;
-			path = LibreLoop;
-			sourceTree = "<group>";
-		};
-		50EDCD985A333A24FBBC5574 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				D6F337187354AD84B57977DD /* LibreLoop.framework */,
-				3E9EC48901FFDE7BCD6CDCE9 /* LibreLoopUI.framework */,
-				F8C952D50024EB39D4A9F98F /* LibreLoopPlugin.framework */,
-				9F83C3C0201BC1B1DA5139E8 /* LibreLoopTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		57723554E2892B78A3E2C0AB /* LibreLoopUI */ = {
-			isa = PBXGroup;
-			children = (
-				27AC7D93C65F1E2D1C27D9B7 /* LibreLoopCGMManager */,
-				B5650286C116B3CB4FDB3E87 /* Pairing */,
-				7486BE584D74CCA89472649D /* Views */,
-			);
-			name = LibreLoopUI;
-			path = LibreLoopUI;
-			sourceTree = "<group>";
-		};
-		654BCB7B8B7E08284439F536 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				88D93E704CA5D8039FD30474 /* LoopKit.framework */,
-				0DC3DE02AC91B7434469ED51 /* LoopKitUI.framework */,
-				524381F0160E130163EB397D /* XCTest.framework */,
-				2B492AD3E2455E0D18132014 /* iOS */,
-				53E10E90E560B9A9B3FB79F1 /* LibreCRKit_LibreCRKit.bundle */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		7486BE584D74CCA89472649D /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				D767B7B0CA1A058E269FB49E /* LibreLoopApplyHelpPagerView.swift */,
-				6BA859757F2E383689ECCC37 /* LibreLoopApplySensorView.swift */,
-				12C842809A61D26673DB4DEB /* LibreLoopLifecycleBar.swift */,
-				1416E24E106E7DCFF4955D7E /* LibreLoopRecoveryView.swift */,
-				C69EC93F0B8AD126CA2106FF /* LibreLoopScanHelpPagerView.swift */,
-				E3F88CBBA8B5EBCB066ADE63 /* LibreLoopScanSensorView.swift */,
-				3BA14BC041554A44DE3A34EA /* LibreLoopSettingsView.swift */,
-			);
-			name = Views;
-			path = Views;
-			sourceTree = "<group>";
-		};
-		786B1F5866603EC5A59F9655 /* LibreLoopPlugin */ = {
-			isa = PBXGroup;
-			children = (
-				AD2D94403178E6D52D8ADFA4 /* LibreLoopPlugin.swift */,
-				14771C3613F55375E3BC78F6 /* Info.plist */,
-			);
-			name = LibreLoopPlugin;
-			path = LibreLoopPlugin;
-			sourceTree = "<group>";
-		};
-		7C1E1BE5FF5BA575625DBAA1 /* Pairing */ = {
-			isa = PBXGroup;
-			children = (
-				2C8E59732E9E557066E83909 /* LibreLoopCGMManager+Pairing.swift */,
-				5561E8DE4D6F62DDF4A42E16 /* LibreLoopKeychain.swift */,
-				599EC1341AD6A7AA3880BDA4 /* LibreLoopPairingService.swift */,
-			);
-			name = Pairing;
-			path = Pairing;
-			sourceTree = "<group>";
-		};
-		B5650286C116B3CB4FDB3E87 /* Pairing */ = {
-			isa = PBXGroup;
-			children = (
-				E43996F701BA8B5850C004E1 /* LibreLoopPairingProgressView.swift */,
-				F88D665A07CC09C6372AB084 /* LibreLoopPairingViewModel.swift */,
-			);
-			name = Pairing;
-			path = Pairing;
-			sourceTree = "<group>";
-		};
-		EB40BD7EFBE947B925D737FF /* LibreLoopTests */ = {
-			isa = PBXGroup;
-			children = (
-				E252C62111AA5B14A5D88CB2 /* LibreLoopCGMManagerStateTests.swift */,
+				4144FA7C50237817428A018A /* LibreLoopCGMManagerStateTests.swift */,
 			);
 			name = LibreLoopTests;
 			path = LibreLoopTests;
 			sourceTree = "<group>";
 		};
-		F5E1C39857D32E1CA38A8387 /* Resources */ = {
+		042D753178B1F4A589964D73 /* Sensor */ = {
 			isa = PBXGroup;
 			children = (
-				F3F905EE42D7B134E8F0CE68 /* phone_cert_162b.bin */,
+				4085CCFB84DDC03915D91D58 /* LibreLoopGlucoseSample.swift */,
+				F542F832162426A5F0EC9210 /* LibreLoopSensorLifecycle.swift */,
+				F703124FB1A46C5B198F6325 /* LibreLoopSensorMonitor.swift */,
+			);
+			name = Sensor;
+			path = Sensor;
+			sourceTree = "<group>";
+		};
+		0C30A92F257BE8860BF81535 /* Pairing */ = {
+			isa = PBXGroup;
+			children = (
+				A74FE37D1C0618434D7960C7 /* LibreLoopCGMManager+Pairing.swift */,
+				DEAFE6C464DF655109797AA2 /* LibreLoopKeychain.swift */,
+				0070D952DE76BD31DE1370E1 /* LibreLoopPairingService.swift */,
+			);
+			name = Pairing;
+			path = Pairing;
+			sourceTree = "<group>";
+		};
+		2C220091F0A5EAD6097AB9F5 /* LibreLoopUI */ = {
+			isa = PBXGroup;
+			children = (
+				4FED474A2ABC259CACD041B0 /* LibreLoopCGMManager */,
+				3FDD0786D04929F48C073629 /* Pairing */,
+				DBF8D91D9FB4820963051917 /* Views */,
+			);
+			name = LibreLoopUI;
+			path = LibreLoopUI;
+			sourceTree = "<group>";
+		};
+		31461C93707E9850DBE00F9A /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				7DBE3AE66BACEED082C2D546 /* HKUnit.swift */,
+				5A076F1337DD8ED12504AB7B /* LibreLoopFileLogger.swift */,
+			);
+			name = Common;
+			path = Common;
+			sourceTree = "<group>";
+		};
+		3FDD0786D04929F48C073629 /* Pairing */ = {
+			isa = PBXGroup;
+			children = (
+				EA121B4A21D6D034B2924357 /* LibreLoopPairingProgressView.swift */,
+				4ED373C572771BE2E84D912A /* LibreLoopPairingViewModel.swift */,
+			);
+			name = Pairing;
+			path = Pairing;
+			sourceTree = "<group>";
+		};
+		4FED474A2ABC259CACD041B0 /* LibreLoopCGMManager */ = {
+			isa = PBXGroup;
+			children = (
+				FEACB01B83CC3A11F1B5007B /* LibreLoopCGMManager+UI.swift */,
+				8A10F29A35971353333E9064 /* LibreLoopUICoordinator.swift */,
+			);
+			name = LibreLoopCGMManager;
+			path = LibreLoopCGMManager;
+			sourceTree = "<group>";
+		};
+		7318A176857D6C2062B684E2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B95312B4D2E8CF8CF391AAC3 /* LoopKit.framework */,
+				71884901E8DB73722D32ADAB /* LoopKitUI.framework */,
+				F3E27391F00192D1B8546B20 /* XCTest.framework */,
+				03DC5A7CE75CE39EBEB70ECC /* iOS */,
+				69D27B2C9AA44B9C21FE07AA /* LibreCRKit_LibreCRKit.bundle */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		73E8E7F10C6CD7CB6CF666F7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */,
+				B3C3362F1B2A912F1258967D /* LibreLoopUI.framework */,
+				B6755F8D75BCCBCCF619B34D /* LibreLoopPlugin.framework */,
+				DD5BA17BB5126A8AF8899C27 /* LibreLoopTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8C7B1DAAED423449FA93A02C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DD3BAAE0AF2C21CE626E59EF /* phone_cert_162b.bin */,
 			);
 			name = Resources;
 			path = LibreLoop/Resources;
 			sourceTree = SOURCE_ROOT;
 		};
+		8F8D9471B7E570247FAA46EA /* LibreLoopPlugin */ = {
+			isa = PBXGroup;
+			children = (
+				8AE6ED876ADB4247B025A77B /* LibreLoopPlugin.swift */,
+				34F44E0662CB49936E0AA2D0 /* Info.plist */,
+			);
+			name = LibreLoopPlugin;
+			path = LibreLoopPlugin;
+			sourceTree = "<group>";
+		};
+		AD6958DE7CAA33FAF0BB700B = {
+			isa = PBXGroup;
+			children = (
+				73E8E7F10C6CD7CB6CF666F7 /* Products */,
+				7318A176857D6C2062B684E2 /* Frameworks */,
+				DEF9B044D140F63CBC09F9E8 /* LibreLoop */,
+				2C220091F0A5EAD6097AB9F5 /* LibreLoopUI */,
+				8F8D9471B7E570247FAA46EA /* LibreLoopPlugin */,
+				0407CEE47417C29EC03B5527 /* LibreLoopTests */,
+				4583D27239600CF4752BE291 /* LICENSE */,
+				668DBCA7596C373BD2E83E51 /* README.md */,
+			);
+			sourceTree = "<group>";
+		};
+		DBF8D91D9FB4820963051917 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1557E0B65574E189DBD7B0DA /* LibreLoopApplyHelpPagerView.swift */,
+				2A9C3AF1D23EC9195402B7F5 /* LibreLoopApplySensorView.swift */,
+				2428756BA5E08BDD15379DDA /* LibreLoopLifecycleBar.swift */,
+				33CFBAA5CAD1D22D046B22FB /* LibreLoopRecoveryView.swift */,
+				E32E882B939E1BC48A40A4C7 /* LibreLoopScanHelpPagerView.swift */,
+				DEB7AB0D9CA13D06215D8CCA /* LibreLoopScanSensorView.swift */,
+				100CE735F47D57B5FA7413C8 /* LibreLoopSettingsView.swift */,
+			);
+			name = Views;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DEF9B044D140F63CBC09F9E8 /* LibreLoop */ = {
+			isa = PBXGroup;
+			children = (
+				31461C93707E9850DBE00F9A /* Common */,
+				E67330D62BC0079B70F81C1A /* LibreLoopCGMManager */,
+				0C30A92F257BE8860BF81535 /* Pairing */,
+				042D753178B1F4A589964D73 /* Sensor */,
+				8C7B1DAAED423449FA93A02C /* Resources */,
+			);
+			name = LibreLoop;
+			path = LibreLoop;
+			sourceTree = "<group>";
+		};
+		E67330D62BC0079B70F81C1A /* LibreLoopCGMManager */ = {
+			isa = PBXGroup;
+			children = (
+				8452088B6268131D8F7114FE /* LibreLoopCGMManager+Observers.swift */,
+				374B143DAEA016D4B7F94587 /* LibreLoopCGMManager.swift */,
+				46D8E8DDDB5204E5C08C788E /* LibreLoopCGMManagerState.swift */,
+			);
+			name = LibreLoopCGMManager;
+			path = LibreLoopCGMManager;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		09193405796430C4230EDF7F /* Headers */ = {
+		181474413AA931F6BA548FFE /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		2597003CD8082640BC2428C5 /* Headers */ = {
+		2433F041958F566EE6FA2DB4 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BB23859674741F7FF211D314 /* Headers */ = {
+		4D28E268186C7AE41744262D /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -385,72 +385,14 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		001DDFA155E5FDEFF6CAE9D3 /* LibreLoopUI */ = {
+		33D8D4A72CA19C7891308C07 /* LibreLoop */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6636C5DFDC25AB205BBE2EA7 /* Build configuration list for PBXNativeTarget "LibreLoopUI" */;
+			buildConfigurationList = 4B234F734B9FF592BCCF01B8 /* Build configuration list for PBXNativeTarget "LibreLoop" */;
 			buildPhases = (
-				BB23859674741F7FF211D314 /* Headers */,
-				53228B3E84CC9A5828283057 /* Sources */,
-				74243546A8F04C6A64CC215A /* Frameworks */,
-				9F021338EC00F02AD298E3BC /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				FED55273E80AFACE53E5D458 /* PBXTargetDependency */,
-			);
-			name = LibreLoopUI;
-			productName = LibreLoopUI;
-			productReference = 3E9EC48901FFDE7BCD6CDCE9 /* LibreLoopUI.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		0954515C47DB77743BF36793 /* LibreLoopPlugin */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 88341C764D02386BB754E302 /* Build configuration list for PBXNativeTarget "LibreLoopPlugin" */;
-			buildPhases = (
-				2597003CD8082640BC2428C5 /* Headers */,
-				D00236C981BE1FC8574A99A4 /* Sources */,
-				0B0677EE09041F42AE2B994F /* Frameworks */,
-				34B075EB9806FC8A6771542F /* Resources */,
-				F923326AC7EA18E097692A6E /* Embed Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				D9181B030F74F7459A7B5684 /* PBXTargetDependency */,
-				9D5D1D68C40FD1C840E460C1 /* PBXTargetDependency */,
-			);
-			name = LibreLoopPlugin;
-			productName = LibreLoopPlugin;
-			productReference = F8C952D50024EB39D4A9F98F /* LibreLoopPlugin.framework */;
-			productType = "com.apple.product-type.framework";
-		};
-		5A7CAD2AADF08902F017E7A0 /* LibreLoopTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F072C6901A53D93BCB280EC5 /* Build configuration list for PBXNativeTarget "LibreLoopTests" */;
-			buildPhases = (
-				BBA3A237C764B112254FC211 /* Sources */,
-				C67701E05177848F21CE95A0 /* Frameworks */,
-				2E41E31401DC42F5575BBE97 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				588460D7D1C03A50C14C7206 /* PBXTargetDependency */,
-			);
-			name = LibreLoopTests;
-			productName = LibreLoopTests;
-			productReference = 9F83C3C0201BC1B1DA5139E8 /* LibreLoopTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		D7B6234D99FE587C7F8C9EB2 /* LibreLoop */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = E5972E07EDA9D7411D544B1D /* Build configuration list for PBXNativeTarget "LibreLoop" */;
-			buildPhases = (
-				09193405796430C4230EDF7F /* Headers */,
-				48D115E2FF31B0F160057839 /* Sources */,
-				49B5D384643363C1F26C094E /* Frameworks */,
-				A468C6452D0C73E3FB22685A /* Resources */,
+				2433F041958F566EE6FA2DB4 /* Headers */,
+				35D34D7C0591C6AF2643C81D /* Sources */,
+				C62F620A0F6B5C3F2BF718C1 /* Frameworks */,
+				48B11DB2046D3379BE5B1BAF /* Resources */,
 			);
 			buildRules = (
 			);
@@ -458,22 +400,80 @@
 			);
 			name = LibreLoop;
 			packageProductDependencies = (
-				77859E89400CDCC13F49E174 /* LibreCRKit */,
+				5060451D8875EE84A2C2EE70 /* LibreCRKit */,
 			);
 			productName = LibreLoop;
-			productReference = D6F337187354AD84B57977DD /* LibreLoop.framework */;
+			productReference = D6AEB8ABDC86115FE33BA32C /* LibreLoop.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		497DD3917D775AF3C8964504 /* LibreLoopUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7B030EA7D894A7CD17DDED91 /* Build configuration list for PBXNativeTarget "LibreLoopUI" */;
+			buildPhases = (
+				181474413AA931F6BA548FFE /* Headers */,
+				8D8447D6CC52C0E7FE710EE2 /* Sources */,
+				30E65382E2928EA728B88CF3 /* Frameworks */,
+				F1CA759EA9E24DF9D5284ECD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D3BBB1B722A7EBE6D7EF905C /* PBXTargetDependency */,
+			);
+			name = LibreLoopUI;
+			productName = LibreLoopUI;
+			productReference = B3C3362F1B2A912F1258967D /* LibreLoopUI.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		83C53EF6E53D802A81C302AD /* LibreLoopPlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C806BD8F96585872C86EB197 /* Build configuration list for PBXNativeTarget "LibreLoopPlugin" */;
+			buildPhases = (
+				4D28E268186C7AE41744262D /* Headers */,
+				C05280C4DCF3FDF5CCD2B81B /* Sources */,
+				51971BC15269E946DE3FAC8E /* Frameworks */,
+				370A2EF6878ABCA4A225F94E /* Resources */,
+				96A94EFDFD433EF591395486 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F139B92967ABB06E78E296C4 /* PBXTargetDependency */,
+				31200C97165C291031BECD66 /* PBXTargetDependency */,
+			);
+			name = LibreLoopPlugin;
+			productName = LibreLoopPlugin;
+			productReference = B6755F8D75BCCBCCF619B34D /* LibreLoopPlugin.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		DF65B605610D0F3476B35DF5 /* LibreLoopTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 119A2180AC418DB872D3CC85 /* Build configuration list for PBXNativeTarget "LibreLoopTests" */;
+			buildPhases = (
+				CF14926CFF3A24FA601D8B69 /* Sources */,
+				9F81066DBD4BBCF7296172CC /* Frameworks */,
+				C09480FBC4ACAFA2E01A4668 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7C446468BE08B9C31DFA9AB0 /* PBXTargetDependency */,
+			);
+			name = LibreLoopTests;
+			productName = LibreLoopTests;
+			productReference = DD5BA17BB5126A8AF8899C27 /* LibreLoopTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		E9464FBE7194B52B74CC89A1 /* Project object */ = {
+		3B4B2E98CBE2F3195601250A /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 17732E255FAC1CBE4E093B89 /* Build configuration list for PBXProject "LibreLoop" */;
+			buildConfigurationList = BBC3DDA754749FDB40F7F3FE /* Build configuration list for PBXProject "LibreLoop" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -481,166 +481,172 @@
 				en,
 				Base,
 			);
-			mainGroup = 2A69F33C6A141AB1D083F167;
+			mainGroup = AD6958DE7CAA33FAF0BB700B;
 			minimizedProjectReferenceProxies = 0;
 			packageReferences = (
-				1B31CFB25F3ECB34122880DD /* XCRemoteSwiftPackageReference "LibreCRKit" */,
+				D270D9B2F6E772B5A55EE492 /* XCRemoteSwiftPackageReference "LibreCRKit" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 50EDCD985A333A24FBBC5574 /* Products */;
+			productRefGroup = 73E8E7F10C6CD7CB6CF666F7 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D7B6234D99FE587C7F8C9EB2 /* LibreLoop */,
-				001DDFA155E5FDEFF6CAE9D3 /* LibreLoopUI */,
-				0954515C47DB77743BF36793 /* LibreLoopPlugin */,
-				5A7CAD2AADF08902F017E7A0 /* LibreLoopTests */,
+				33D8D4A72CA19C7891308C07 /* LibreLoop */,
+				497DD3917D775AF3C8964504 /* LibreLoopUI */,
+				83C53EF6E53D802A81C302AD /* LibreLoopPlugin */,
+				DF65B605610D0F3476B35DF5 /* LibreLoopTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		2E41E31401DC42F5575BBE97 /* Resources */ = {
+		370A2EF6878ABCA4A225F94E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		34B075EB9806FC8A6771542F /* Resources */ = {
+		48B11DB2046D3379BE5B1BAF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C598F432366029891C73E423 /* LibreCRKit_LibreCRKit.bundle in Resources */,
+				25E4D12BE3914B4768E893C0 /* phone_cert_162b.bin in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C09480FBC4ACAFA2E01A4668 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9F021338EC00F02AD298E3BC /* Resources */ = {
+		F1CA759EA9E24DF9D5284ECD /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		A468C6452D0C73E3FB22685A /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				739A2DFB410BE152F2CE8A96 /* LibreCRKit_LibreCRKit.bundle in Resources */,
-				B79C14E8029C9CE8B699D54C /* phone_cert_162b.bin in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		48D115E2FF31B0F160057839 /* Sources */ = {
+		35D34D7C0591C6AF2643C81D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FE24586E2EDBBD25ECD23D39 /* HKUnit.swift in Sources */,
-				D72BA15A973340232AD494C4 /* LibreLoopFileLogger.swift in Sources */,
-				0D9D6642EC02413176624698 /* LibreLoopCGMManager+Observers.swift in Sources */,
-				B6FB39A960CC7934BFFB7A30 /* LibreLoopCGMManager.swift in Sources */,
-				4025967DF373556C5ABDD950 /* LibreLoopCGMManagerState.swift in Sources */,
-				9EC05D7D084306E98E2DD805 /* LibreLoopCGMManager+Pairing.swift in Sources */,
-				688B785969B2C07A5673BAFF /* LibreLoopKeychain.swift in Sources */,
-				CBEFB83913E4730E4BCCE1A8 /* LibreLoopPairingService.swift in Sources */,
-				CD3572436D448D191B463555 /* LibreLoopGlucoseSample.swift in Sources */,
-				FCF3F91298C3FDCC2CE2AAAA /* LibreLoopSensorLifecycle.swift in Sources */,
-				119D17BD1445B1A7930137BD /* LibreLoopSensorMonitor.swift in Sources */,
+				9996E24298FE449E27A307DC /* HKUnit.swift in Sources */,
+				D1D783767818B2808146B3C6 /* LibreLoopFileLogger.swift in Sources */,
+				0ABBFADC1693B9C197E086A1 /* LibreLoopCGMManager+Observers.swift in Sources */,
+				F3EC60356F0D7FED4D06CF33 /* LibreLoopCGMManager.swift in Sources */,
+				8360FC3C2ACF4C68DB3E7F15 /* LibreLoopCGMManagerState.swift in Sources */,
+				461B3D7C97359D9104907C77 /* LibreLoopCGMManager+Pairing.swift in Sources */,
+				9A362C00EFFBFE0207A6E867 /* LibreLoopKeychain.swift in Sources */,
+				0BD449348D3A37F39E5E32DB /* LibreLoopPairingService.swift in Sources */,
+				20C4F6A2A8380D39558FA97C /* LibreLoopGlucoseSample.swift in Sources */,
+				738C370EFFDD9AF1FB8A6DF7 /* LibreLoopSensorLifecycle.swift in Sources */,
+				BCE60BF7AB38047FADECD5C7 /* LibreLoopSensorMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		53228B3E84CC9A5828283057 /* Sources */ = {
+		8D8447D6CC52C0E7FE710EE2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				95122893013B32CEB35A4721 /* LibreLoopCGMManager+UI.swift in Sources */,
-				D2B55573EAA60A1048FB1C0D /* LibreLoopUICoordinator.swift in Sources */,
-				2626B4C1CAA31E0800353D0A /* LibreLoopPairingProgressView.swift in Sources */,
-				A4D20527263D08BA718BEDB5 /* LibreLoopPairingViewModel.swift in Sources */,
-				7FB7140169C8C9D9A2DBE38D /* LibreLoopApplyHelpPagerView.swift in Sources */,
-				93795EA5C3E3A733EDA14A3E /* LibreLoopApplySensorView.swift in Sources */,
-				BF3C66719B70EFEE0FC0F7F1 /* LibreLoopLifecycleBar.swift in Sources */,
-				D50C9C609A05A5FCE7CEB7B1 /* LibreLoopRecoveryView.swift in Sources */,
-				5B5732B7C42D0BE08733B049 /* LibreLoopScanHelpPagerView.swift in Sources */,
-				5E5B0E29958B891E502CED1D /* LibreLoopScanSensorView.swift in Sources */,
-				828CCC9CAC2115E7798EA1F5 /* LibreLoopSettingsView.swift in Sources */,
+				A7DBC23B1AD8DBF8C5B9D287 /* LibreLoopCGMManager+UI.swift in Sources */,
+				1EAB0EE447DFB31CA9CBF135 /* LibreLoopUICoordinator.swift in Sources */,
+				A824B4A4F5CD70D5B01A4C82 /* LibreLoopPairingProgressView.swift in Sources */,
+				B7AADA04930C2D1D69F75DEA /* LibreLoopPairingViewModel.swift in Sources */,
+				79AC59290A75B4E47D90733C /* LibreLoopApplyHelpPagerView.swift in Sources */,
+				20C94ADAF8925B373E51AF94 /* LibreLoopApplySensorView.swift in Sources */,
+				1A4982D92949386D954F273B /* LibreLoopLifecycleBar.swift in Sources */,
+				390C03E85584273C8F9DA1CA /* LibreLoopRecoveryView.swift in Sources */,
+				6FFB5D8140E94F1533EE5855 /* LibreLoopScanHelpPagerView.swift in Sources */,
+				A88C715A4341F74AEE7B5CF2 /* LibreLoopScanSensorView.swift in Sources */,
+				215DA0295F6D024F90A01632 /* LibreLoopSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		BBA3A237C764B112254FC211 /* Sources */ = {
+		C05280C4DCF3FDF5CCD2B81B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2CADFFB19D7D56775AAC5D6E /* LibreLoopCGMManagerStateTests.swift in Sources */,
+				78FC2DE3AA50ED0F525A69E9 /* LibreLoopPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		D00236C981BE1FC8574A99A4 /* Sources */ = {
+		CF14926CFF3A24FA601D8B69 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ED052A2785122A674EDB055B /* LibreLoopPlugin.swift in Sources */,
+				38F2181DA33C69244A5F08C1 /* LibreLoopCGMManagerStateTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		588460D7D1C03A50C14C7206 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = LibreLoop;
-			target = D7B6234D99FE587C7F8C9EB2 /* LibreLoop */;
-			targetProxy = 3AC7198F512CBAEDBB566276 /* PBXContainerItemProxy */;
-		};
-		9D5D1D68C40FD1C840E460C1 /* PBXTargetDependency */ = {
+		31200C97165C291031BECD66 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = LibreLoopUI;
-			target = 001DDFA155E5FDEFF6CAE9D3 /* LibreLoopUI */;
-			targetProxy = 359A418EC119F03990FFF0B0 /* PBXContainerItemProxy */;
+			target = 497DD3917D775AF3C8964504 /* LibreLoopUI */;
+			targetProxy = 8B53EEBF07B524982CD88550 /* PBXContainerItemProxy */;
 		};
-		D9181B030F74F7459A7B5684 /* PBXTargetDependency */ = {
+		7C446468BE08B9C31DFA9AB0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = LibreLoop;
-			target = D7B6234D99FE587C7F8C9EB2 /* LibreLoop */;
-			targetProxy = 575981F590371C2361FC2239 /* PBXContainerItemProxy */;
+			target = 33D8D4A72CA19C7891308C07 /* LibreLoop */;
+			targetProxy = CE737BE7813BA93E8236D578 /* PBXContainerItemProxy */;
 		};
-		FED55273E80AFACE53E5D458 /* PBXTargetDependency */ = {
+		D3BBB1B722A7EBE6D7EF905C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = LibreLoop;
-			target = D7B6234D99FE587C7F8C9EB2 /* LibreLoop */;
-			targetProxy = 866F26D3DDFD1C999F9DDEAF /* PBXContainerItemProxy */;
+			target = 33D8D4A72CA19C7891308C07 /* LibreLoop */;
+			targetProxy = CCAC2CF48557879D1FFEBBA0 /* PBXContainerItemProxy */;
+		};
+		F139B92967ABB06E78E296C4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LibreLoop;
+			target = 33D8D4A72CA19C7891308C07 /* LibreLoop */;
+			targetProxy = 8A9E0DB827C977C400EA8024 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		06EF3529680ABD6EC639CDB3 /* Debug */ = {
+		0AEDCD4C83E42A419636BB07 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 LoopKit Authors. All rights reserved.";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoop;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0E56C2DD563E75F589678F2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
-		1049B6563444A63871D81669 /* Debug */ = {
+		2B596458E23EA24C1AE5A7C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -665,7 +671,34 @@
 			};
 			name = Debug;
 		};
-		1B53BEA0FEE109A1F8F99640 /* Release */ = {
+		3AB7C77B07D69705156021DC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LibreLoopPlugin/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 LoopKit Authors. All rights reserved.";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopPlugin;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+				WRAPPER_EXTENSION = loopplugin;
+			};
+			name = Debug;
+		};
+		6513083F13979C488FF6509E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -693,7 +726,7 @@
 			};
 			name = Release;
 		};
-		31E81963551D2542A9129795 /* Release */ = {
+		6E9A1A503E8877BA465CAAE9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -719,23 +752,7 @@
 			};
 			name = Release;
 		};
-		3F377EED0DF81B8C279B758A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		5B459285EBD94EE8A454311F /* Debug */ = {
+		8019F1B1A9FB903F15D3F2AE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -803,49 +820,7 @@
 			};
 			name = Debug;
 		};
-		5EC6A88D1C33F207F830C050 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
-		};
-		9CC5608B7CBF65E8DE71BD4C /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = NO;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = LibreLoopPlugin/Info.plist;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 LoopKit Authors. All rights reserved.";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoopPlugin;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				TARGETED_DEVICE_FAMILY = 1;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-				WRAPPER_EXTENSION = loopplugin;
-			};
-			name = Debug;
-		};
-		BCFC96D30DCB638E6F2DA0A9 /* Release */ = {
+		8556C70BCA1320E862847FE5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -906,7 +881,32 @@
 			};
 			name = Release;
 		};
-		CF101F5E8FF0634ADE93693B /* Release */ = {
+		E0F0363B3B3BC513258E7709 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 LoopKit Authors. All rights reserved.";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.loopkit.LibreLoop;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		F1009FB5DC6ABEDCB94CB17F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -935,47 +935,47 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		17732E255FAC1CBE4E093B89 /* Build configuration list for PBXProject "LibreLoop" */ = {
+		119A2180AC418DB872D3CC85 /* Build configuration list for PBXNativeTarget "LibreLoopTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5B459285EBD94EE8A454311F /* Debug */,
-				BCFC96D30DCB638E6F2DA0A9 /* Release */,
+				0AEDCD4C83E42A419636BB07 /* Release */,
+				0E56C2DD563E75F589678F2F /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6636C5DFDC25AB205BBE2EA7 /* Build configuration list for PBXNativeTarget "LibreLoopUI" */ = {
+		4B234F734B9FF592BCCF01B8 /* Build configuration list for PBXNativeTarget "LibreLoop" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				31E81963551D2542A9129795 /* Release */,
-				1049B6563444A63871D81669 /* Debug */,
+				F1009FB5DC6ABEDCB94CB17F /* Release */,
+				E0F0363B3B3BC513258E7709 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		88341C764D02386BB754E302 /* Build configuration list for PBXNativeTarget "LibreLoopPlugin" */ = {
+		7B030EA7D894A7CD17DDED91 /* Build configuration list for PBXNativeTarget "LibreLoopUI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				1B53BEA0FEE109A1F8F99640 /* Release */,
-				9CC5608B7CBF65E8DE71BD4C /* Debug */,
+				6E9A1A503E8877BA465CAAE9 /* Release */,
+				2B596458E23EA24C1AE5A7C0 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E5972E07EDA9D7411D544B1D /* Build configuration list for PBXNativeTarget "LibreLoop" */ = {
+		BBC3DDA754749FDB40F7F3FE /* Build configuration list for PBXProject "LibreLoop" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				CF101F5E8FF0634ADE93693B /* Release */,
-				06EF3529680ABD6EC639CDB3 /* Debug */,
+				8019F1B1A9FB903F15D3F2AE /* Debug */,
+				8556C70BCA1320E862847FE5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F072C6901A53D93BCB280EC5 /* Build configuration list for PBXNativeTarget "LibreLoopTests" */ = {
+		C806BD8F96585872C86EB197 /* Build configuration list for PBXNativeTarget "LibreLoopPlugin" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				3F377EED0DF81B8C279B758A /* Release */,
-				5EC6A88D1C33F207F830C050 /* Debug */,
+				6513083F13979C488FF6509E /* Release */,
+				3AB7C77B07D69705156021DC /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -983,23 +983,23 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		1B31CFB25F3ECB34122880DD /* XCRemoteSwiftPackageReference "LibreCRKit" */ = {
+		D270D9B2F6E772B5A55EE492 /* XCRemoteSwiftPackageReference "LibreCRKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/airedev326/LibreCRKit.git";
 			requirement = {
 				kind = revision;
-				revision = f690013632712b6d28e843c774d19cfd1c662898;
+				revision = 60df7ec88441f43fb1105199666072e4567973e7;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		77859E89400CDCC13F49E174 /* LibreCRKit */ = {
+		5060451D8875EE84A2C2EE70 /* LibreCRKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1B31CFB25F3ECB34122880DD /* XCRemoteSwiftPackageReference "LibreCRKit" */;
+			package = D270D9B2F6E772B5A55EE492 /* XCRemoteSwiftPackageReference "LibreCRKit" */;
 			productName = LibreCRKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = E9464FBE7194B52B74CC89A1 /* Project object */;
+	rootObject = 3B4B2E98CBE2F3195601250A /* Project object */;
 }
