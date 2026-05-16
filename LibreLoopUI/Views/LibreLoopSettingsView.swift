@@ -39,6 +39,18 @@ struct LibreLoopSettingsView: View {
         } message: {
             Text("This stops monitoring the current sensor and starts pairing for a new one. The CGM stays configured with Loop.")
         }
+        // Sheet must be attached at the List level. When it's attached inside
+        // a Section, the List rebuilds its rows on the state change and
+        // dismisses the sheet immediately.
+        .sheet(isPresented: $showingMinuteByMinuteWarning) {
+            MinuteByMinuteWarningSheet(
+                onEnable: {
+                    viewModel.setMinuteByMinuteForwarding(true)
+                    showingMinuteByMinuteWarning = false
+                },
+                onCancel: { showingMinuteByMinuteWarning = false }
+            )
+        }
         .onAppear { viewModel.subscribe() }
         .onDisappear { viewModel.unsubscribe() }
     }
@@ -197,15 +209,6 @@ struct LibreLoopSettingsView: View {
                  : "Only one reading every ~5 minutes is sent to Loop, matching the cadence other CGMs use.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-        }
-        .sheet(isPresented: $showingMinuteByMinuteWarning) {
-            MinuteByMinuteWarningSheet(
-                onEnable: {
-                    viewModel.setMinuteByMinuteForwarding(true)
-                    showingMinuteByMinuteWarning = false
-                },
-                onCancel: { showingMinuteByMinuteWarning = false }
-            )
         }
     }
 
