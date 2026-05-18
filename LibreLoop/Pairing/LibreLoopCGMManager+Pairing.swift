@@ -55,11 +55,12 @@ extension LibreLoopCGMManager {
         self.monitor = monitor
         // Each new BLE session gets its own backfill window.
         self.hasRequestedBackfillThisSession = false
+        self.backfillForwardedLifeCounts.removeAll(keepingCapacity: true)
         monitor.setHandlers(
             onReading: { [weak self] sample in self?.ingest(sample) },
             onDisconnect: { [weak self] in self?.handleMonitorDisconnect() },
             onStatus: { [weak self] text in self?.updateStatusDetail(text) },
-            onHistoricalPage: { [weak self] page in self?.handleHistoricalPage(page) }
+            onHistoricalPage: { [weak self] page, source in self?.handleHistoricalPage(page, source: source) }
         )
         monitor.start()
         // Start the no-data watchdog immediately after adoption -- if the
@@ -101,6 +102,18 @@ extension LibreLoopCGMManager {
                 guard let self else { return }
                 llog("backfill request failed: \(String(describing: error))")
                 self.hasRequestedBackfillThisSession = false   // retry on next reading
+                return
+            }
+            // Diagnostic: also pull the clinical stream covering the same
+            // range. LibreCRKit's docs don't ground what clinical contains
+            // vs historical; handleHistoricalPage logs the source and skips
+            // any sample whose lifeCount we've already forwarded via
+            // realtime or historical, so duplicates can't reach Loop.
+            do {
+                try await monitor.requestClinicalBackfill(fromLifeCount: from)
+            } catch {
+                guard let self else { return }
+                llog("clinical backfill request failed (non-fatal): \(String(describing: error))")
             }
         }
     }
@@ -276,26 +289,30 @@ extension LibreLoopCGMManager {
     /// decoded mg/dL is present), push the batch to Loop's delegate, and
     /// advance `state.lastHistoricalLifeCount` so the next backfill picks
     /// up where we left off.
-    func handleHistoricalPage(_ page: HistoricalReadingPage) {
+    func handleHistoricalPage(_ page: HistoricalReadingPage, source: LibreLoopSensorMonitor.BackfillSource) {
         guard let activatedAt = state.activatedAt else {
             llog("backfill page received before activatedAt known; deferring")
             return
         }
         let serial = state.sensorSerial ?? "unknown"
-        // Build the set of lifeCounts we've already forwarded as realtime.
-        // Backfill samples for those lifeCounts use the sensor's smoothed/
-        // historical pipeline and disagree with realtime by up to ±20 mg/dL
-        // (verified in field logs). They land in Loop under a different
-        // syncIdentifier, so without this filter Loop stores both values for
-        // the same timestamp -- visible as two independent dots that disagree.
-        // Only forward backfill samples that fill an actual gap.
+        let sourceLabel = (source == .clinical) ? "clinical" : "historical"
+        // Dedup is two-layered: against realtime (live BLE stream we already
+        // forwarded) and against this session's prior backfill forwards
+        // (historical and clinical can overlap, and they may not even agree
+        // on values for the same lifeCount since they're different sensor
+        // pipelines).
         let realtimeLifeCounts = Set(recentSamples.map { $0.lifeCount })
         var newSamples: [NewGlucoseSample] = []
-        var droppedDuplicates = 0
+        var droppedRealtimeDup = 0
+        var droppedBackfillDup = 0
         for sample in page.samples {
             guard let mgdl = sample.glucoseMgDL else { continue }
             if realtimeLifeCounts.contains(sample.lifeCount) {
-                droppedDuplicates += 1
+                droppedRealtimeDup += 1
+                continue
+            }
+            if backfillForwardedLifeCounts.contains(sample.lifeCount) {
+                droppedBackfillDup += 1
                 continue
             }
             let date = activatedAt.addingTimeInterval(TimeInterval(sample.lifeCount) * 60)
@@ -311,6 +328,7 @@ extension LibreLoopCGMManager {
                 syncVersion: 1,
                 device: device
             ))
+            backfillForwardedLifeCounts.insert(sample.lifeCount)
         }
         if !newSamples.isEmpty {
             delegateQueue?.async { [weak self] in
@@ -320,13 +338,19 @@ extension LibreLoopCGMManager {
             let firstDate = newSamples.first?.date.timeIntervalSince1970 ?? 0
             let lastDate = newSamples.last?.date.timeIntervalSince1970 ?? 0
             let values = newSamples.map { Int($0.quantity.doubleValue(for: .milligramsPerDeciliter)) }
-            let suffix = droppedDuplicates > 0 ? " (dropped \(droppedDuplicates) realtime-duplicate sample(s))" : ""
-            llog("forwarded \(newSamples.count) backfill samples to Loop: lifeCount \(page.startLifeCount)..\(page.endLifeCount), dates \(firstDate)..\(lastDate), mgdl=\(values)\(suffix)")
-        } else if droppedDuplicates > 0 {
-            llog("dropped all \(droppedDuplicates) backfill sample(s) in page lifeCount \(page.startLifeCount)..\(page.endLifeCount) — all overlap with realtime")
+            var suffixParts: [String] = []
+            if droppedRealtimeDup > 0 { suffixParts.append("\(droppedRealtimeDup) realtime-dup") }
+            if droppedBackfillDup > 0 { suffixParts.append("\(droppedBackfillDup) backfill-dup") }
+            let suffix = suffixParts.isEmpty ? "" : " (dropped \(suffixParts.joined(separator: ", ")))"
+            llog("forwarded \(newSamples.count) \(sourceLabel) backfill samples to Loop: lifeCount \(page.startLifeCount)..\(page.endLifeCount), dates \(firstDate)..\(lastDate), mgdl=\(values)\(suffix)")
+        } else if droppedRealtimeDup + droppedBackfillDup > 0 {
+            llog("dropped all \(droppedRealtimeDup + droppedBackfillDup) \(sourceLabel) backfill sample(s) in page lifeCount \(page.startLifeCount)..\(page.endLifeCount) (realtime-dup=\(droppedRealtimeDup), backfill-dup=\(droppedBackfillDup))")
         }
-        // Advance the watermark to the page's end, even if no usable samples
-        // -- skipping unusable samples shouldn't cause us to re-request them.
+        // Advance the historical watermark only for historical pages. The
+        // clinical stream may have a different commit cadence; mixing it
+        // into lastHistoricalLifeCount could cause us to skip a historical
+        // page that hadn't been committed yet at the time clinical arrived.
+        guard source == .historical else { return }
         var updated = state
         let prior = updated.lastHistoricalLifeCount ?? 0
         if page.endLifeCount > prior {

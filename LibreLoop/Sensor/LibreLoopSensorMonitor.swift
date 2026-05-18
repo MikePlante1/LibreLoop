@@ -15,7 +15,15 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     public typealias ReadingHandler = @Sendable (LibreLoopGlucoseSample) -> Void
     public typealias DisconnectHandler = @Sendable () -> Void
     public typealias StatusHandler = @Sendable (String) -> Void
-    public typealias HistoricalPageHandler = @Sendable (HistoricalReadingPage) -> Void
+    public typealias HistoricalPageHandler = @Sendable (HistoricalReadingPage, BackfillSource) -> Void
+
+    /// Tags decoded backfill pages with the channel that delivered them so
+    /// the manager can apply source-aware dedup (clinical pages may overlap
+    /// historical pages and we don't want to double-feed Loop).
+    public enum BackfillSource: Sendable, Equatable {
+        case historical
+        case clinical
+    }
     /// Fires once the post-auth CCCD refresh completes and the monitor is
     /// ready to accept commands (backfill, etc) and stream data. Use this
     /// instead of a fixed-delay Task — CCCD refresh duration varies with
@@ -53,7 +61,7 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     public func setHandlers(onReading: @escaping ReadingHandler,
                             onDisconnect: @escaping DisconnectHandler,
                             onStatus: @escaping StatusHandler = { _ in },
-                            onHistoricalPage: @escaping HistoricalPageHandler = { _ in },
+                            onHistoricalPage: @escaping HistoricalPageHandler = { _, _ in },
                             onReady: @escaping ReadyHandler = {}) {
         lock.lock()
         defer { lock.unlock() }
@@ -151,18 +159,47 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     /// the historicData channel and are routed via `onHistoricalPage`.
     /// Sensor stops on its own when the range is exhausted; no terminator.
     public func requestHistoricalBackfill(fromLifeCount: UInt16) async throws {
-        // Realtime monitoring doesn't need historicData subscribed, so the
-        // default refreshDataPlaneNotifications list skips it. Backfill
-        // responses are delivered on this channel though, so enable its CCCD
-        // first or the writes go through but the pages never reach us.
+        try await issueBackfill(stream: .historical, fromLifeCount: fromLifeCount)
+    }
+
+    /// Diagnostic: also ask the sensor for the clinical stream. Same decode
+    /// shape as historical but delivered on `clinicalData`. LibreCRKit's
+    /// protocol notes don't ground what's in it; we send the request,
+    /// subscribe to the CCCD, and route the pages with `source: .clinical`
+    /// so the manager can compare them against historical/realtime.
+    public func requestClinicalBackfill(fromLifeCount: UInt16) async throws {
+        try await issueBackfill(stream: .clinical, fromLifeCount: fromLifeCount)
+    }
+
+    private func issueBackfill(stream: BackfillStream, fromLifeCount: UInt16) async throws {
+        // Realtime monitoring doesn't need historicData/clinicalData
+        // subscribed, so the default refreshDataPlaneNotifications list
+        // skips them. Enable the appropriate channel's CCCD here or the
+        // writes go through but the pages never reach us.
+        let chr: CBUUID
+        let label: String
+        switch stream {
+        case .historical:
+            chr = LibreSensorGATT.Char.historicData
+            label = "historicData"
+        case .clinical:
+            chr = LibreSensorGATT.Char.clinicalData
+            label = "clinicalData"
+        }
         do {
-            try await session.setNotify(true, for: LibreSensorGATT.Char.historicData, timeout: 5)
-            llog("historicData notifications enabled for backfill")
+            try await session.setNotify(true, for: chr, timeout: 5)
+            llog("\(label) notifications enabled for backfill")
         } catch {
-            llog("failed to enable historicData notifications: \(String(describing: error))")
+            llog("failed to enable \(label) notifications: \(String(describing: error))")
         }
 
-        let command = PatchControlCommand.historicalBackfillGreaterEqual(lifeCount: fromLifeCount)
+        let command: PatchControlCommand
+        switch stream {
+        case .historical:
+            command = PatchControlCommand.historicalBackfillGreaterEqual(lifeCount: fromLifeCount)
+        case .clinical:
+            command = PatchControlCommand.clinicalBackfillGreaterEqual(lifeCount: fromLifeCount)
+        }
         lock.lock()
         outboundSequence &+= 1
         let sequence = outboundSequence
@@ -172,7 +209,7 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             sequence: sequence,
             kind: .patchControlWrite
         )
-        llog("backfill request seq=\(sequence) >= lifeCount \(fromLifeCount)")
+        llog("\(label) backfill request seq=\(sequence) >= lifeCount \(fromLifeCount)")
         try await session.writeRaw(
             frame.raw,
             to: LibreSensorGATT.Char.patchControl,
@@ -202,11 +239,12 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             let packet = try decoder.decrypt(frame: frame, channel: channel)
             switch packet.payload {
             case .historicalReadingPage(let page):
-                llog("historical page startLC=\(page.startLifeCount) endLC=\(page.endLifeCount) samples=\(page.samples.count)")
+                let source: BackfillSource = (channel == .clinicalData) ? .clinical : .historical
+                llog("\(source == .clinical ? "clinical" : "historical") page startLC=\(page.startLifeCount) endLC=\(page.endLifeCount) samples=\(page.samples.count)")
                 lock.lock()
                 let handler = historicalPageHandler
                 lock.unlock()
-                handler?(page)
+                handler?(page, source)
             case .realtimeGlucose(let reading):
                 // Build a SensorLifecycle from the reading's own age counter so
                 // the quality assessment can correctly attribute "not actionable"

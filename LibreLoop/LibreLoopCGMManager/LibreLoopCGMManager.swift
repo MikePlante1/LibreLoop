@@ -219,6 +219,13 @@ public final class LibreLoopCGMManager: CGMManager {
     /// Reset when the monitor is cleared so the next session re-requests.
     var hasRequestedBackfillThisSession: Bool = false
 
+    /// Set of lifeCounts we've forwarded as backfill (historical or clinical)
+    /// during the current BLE session. Used to suppress clinical samples that
+    /// overlap historical and vice versa, on top of the realtime-overlap
+    /// suppression done against `recentSamples`. Reset whenever the monitor
+    /// is adopted fresh (see `adopt`).
+    var backfillForwardedLifeCounts: Set<UInt16> = []
+
     /// Single long-lived BLE scanner. Created with
     /// CBCentralManagerOptionRestoreIdentifierKey so iOS can preserve the
     /// connected peripheral + subscriptions across app terminations and
