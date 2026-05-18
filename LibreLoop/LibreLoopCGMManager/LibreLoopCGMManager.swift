@@ -277,6 +277,7 @@ public final class LibreLoopCGMManager: CGMManager {
     }
 
     private var connectionEventTask: Task<Void, Never>?
+    private var stateEventTask: Task<Void, Never>?
 
     private func startConnectionEventListener(on scanner: SensorScanner) {
         connectionEventTask?.cancel()
@@ -288,6 +289,31 @@ public final class LibreLoopCGMManager: CGMManager {
                     await MainActor.run {
                         // Any event for our peripheral is a hint to attempt
                         // reconnect. Idempotent if loop is running.
+                        self.scheduleInitialReconnect()
+                    }
+                }
+                if Task.isCancelled { break }
+            }
+        }
+        startStateEventListener(on: scanner)
+    }
+
+    /// Mirrors G7's `centralManagerDidUpdateState` behavior at a higher
+    /// level: whenever the central transitions to `.poweredOn` (Bluetooth
+    /// was off and just came back, system reset settled, etc.), we
+    /// auto-kick a reconnect if we have saved sensor state. Without this
+    /// we'd sit waiting for Loop's next fetch poll to notice we're not
+    /// connected.
+    private func startStateEventListener(on scanner: SensorScanner) {
+        stateEventTask?.cancel()
+        stateEventTask = Task { [weak self] in
+            for await state in scanner.stateEvents() {
+                guard let self else { return }
+                llog("central state: \(String(describing: state))")
+                if state == .poweredOn,
+                   self.state.peripheralID != nil,
+                   self.monitor == nil {
+                    await MainActor.run {
                         self.scheduleInitialReconnect()
                     }
                 }
@@ -341,6 +367,7 @@ public final class LibreLoopCGMManager: CGMManager {
         noDataWatchdog?.cancel()
         restorationTask?.cancel()
         connectionEventTask?.cancel()
+        stateEventTask?.cancel()
     }
 
     /// Watchdog: if a monitor is alive but no glucose readings have arrived

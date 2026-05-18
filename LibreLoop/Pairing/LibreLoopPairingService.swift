@@ -114,9 +114,26 @@ public final class LibreLoopPairingService {
             peripheral = retrieved.first
         }
 
-        // Fallback: no saved peripheralID or iOS doesn't know it (BLE
-        // state wiped, sensor never paired with this device). Fall back
-        // to a bounded scan.
+        // G7-style fallback: if retrievePeripherals(withIdentifiers:)
+        // didn't return our peripheral (iOS may have evicted the cached
+        // identifier after a long suspension), ask iOS for any peripheral
+        // it considers connected that advertises the Libre 3 service.
+        // The OS often holds the link from a prior session/restore and
+        // we don't need to scan or even reconnect at the OS level.
+        if peripheral == nil {
+            let connected = await scanner.retrieveConnectedPeripherals()
+            if let id = expectedPeripheralID {
+                peripheral = connected.first { $0.identifier == id }
+            } else {
+                peripheral = connected.first
+            }
+            if peripheral != nil {
+                llog("pre-connect: recovered peripheral from retrieveConnectedPeripherals (no retrievePeripherals match)")
+            }
+        }
+
+        // Final fallback: scan. Bounded so we don't burn the radio
+        // forever waiting for a sensor that might never show up.
         if peripheral == nil {
             peripheral = try await Self.scanForPeripheral(
                 scanner: scanner,
