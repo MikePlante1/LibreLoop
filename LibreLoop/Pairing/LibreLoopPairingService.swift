@@ -126,6 +126,28 @@ public final class LibreLoopPairingService {
         }
         guard let peripheral else { throw Failure.bleNoSensorDiscovered }
 
+        // Re-check the central manager is still .poweredOn. We checked
+        // at the top of reconnect (waitUntilReady before peripheral
+        // retrieval), but state can flip between then and now — airplane
+        // mode toggle, BT off, simulator reset, system BT crash. connect
+        // against a non-poweredOn central silently fails. waitUntilReady
+        // returns immediately if already .poweredOn, suspends if
+        // transitioning, throws on terminal states.
+        try await scanner.waitUntilReady()
+
+        // Make sure the peripheral is in a clean .disconnected state.
+        // Previously abandoned attempts may have left it in .connecting
+        // (pending connect iOS is still holding) or phantom-.connected;
+        // in either case a new connect either queues behind the stale
+        // request or no-ops.
+        let preState = await scanner.state(of: peripheral)
+        if preState != .disconnected {
+            llog("pre-connect: peripheral state=\(String(describing: preState)); forcing disconnect")
+            await scanner.ensureDisconnected(peripheralID: peripheral.identifier)
+            let postState = await scanner.state(of: peripheral)
+            llog("pre-connect: post-cancel state=\(String(describing: postState))")
+        }
+
         onStage(.bleConnecting)
         let session: SensorSession
         do {

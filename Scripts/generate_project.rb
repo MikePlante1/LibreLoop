@@ -171,7 +171,7 @@ librecrkit_pkg = proj.new(Xcodeproj::Project::Object::XCRemoteSwiftPackageRefere
 librecrkit_pkg.repositoryURL = 'https://github.com/loopkitdev/LibreCRKit.git'
 librecrkit_pkg.requirement = {
   'kind' => 'revision',
-  'revision' => '6606a1a62ca356681b82a95281e8274c01cb1e04',
+  'revision' => 'df1e09c808ff694ee2d94f7d4f4957da6d68fb0b',
 }
 proj.root_object.package_references << librecrkit_pkg
 
