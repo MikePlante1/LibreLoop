@@ -17,6 +17,7 @@ struct LibreLoopSettingsView: View {
             sensorSection
             lastReadingSection
             recentReadingsSection
+            debugInfoSection
             forwardingSection
             deleteSection
         }
@@ -90,30 +91,44 @@ struct LibreLoopSettingsView: View {
                     .padding(.leading, 18)
                 }
             }
-            if let serial = viewModel.sensorSerial {
-                LabeledContent("Serial", value: serial)
-                    .monospaced()
-            }
-            if let ble = viewModel.bleAddress {
-                LabeledContent("Bluetooth", value: ble)
-                    .monospaced()
-                    .font(.footnote)
-                    .textSelection(.enabled)
-            }
-            if let pin = viewModel.blePINHex {
-                LabeledContent("BLE PIN", value: pin)
-                    .monospaced()
-                    .font(.footnote)
-                    .textSelection(.enabled)
-            }
-            if let rid = viewModel.receiverIDHex {
-                LabeledContent("Receiver ID", value: rid)
-                    .monospaced()
-                    .font(.footnote)
-                    .textSelection(.enabled)
-            }
             if let activated = viewModel.activatedAt {
                 LabeledContent("Activated", value: activated.formatted(date: .abbreviated, time: .shortened))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var debugInfoSection: some View {
+        let hasAny = viewModel.sensorSerial != nil
+            || viewModel.bleAddress != nil
+            || viewModel.blePINHex != nil
+            || viewModel.receiverIDHex != nil
+        if hasAny {
+            Section("Debug Info") {
+                if let serial = viewModel.sensorSerial {
+                    LabeledContent("Serial", value: serial)
+                        .monospaced()
+                        .font(.footnote)
+                        .textSelection(.enabled)
+                }
+                if let ble = viewModel.bleAddress {
+                    LabeledContent("Bluetooth", value: ble)
+                        .monospaced()
+                        .font(.footnote)
+                        .textSelection(.enabled)
+                }
+                if let pin = viewModel.blePINHex {
+                    LabeledContent("BLE PIN", value: pin)
+                        .monospaced()
+                        .font(.footnote)
+                        .textSelection(.enabled)
+                }
+                if let rid = viewModel.receiverIDHex {
+                    LabeledContent("Receiver ID", value: rid)
+                        .monospaced()
+                        .font(.footnote)
+                        .textSelection(.enabled)
+                }
             }
         }
     }
