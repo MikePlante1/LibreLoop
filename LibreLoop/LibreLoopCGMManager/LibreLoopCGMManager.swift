@@ -1,6 +1,7 @@
 import Foundation
 import HealthKit
 import LibreCRKit
+import LoopAlgorithm
 import LoopKit
 import os.log
 import UIKit
@@ -203,7 +204,10 @@ public final class LibreLoopCGMManager: CGMManager {
     public var providesBLEHeartbeat: Bool { true }
     public var shouldSyncToRemoteService: Bool { true }
     public var managedDataInterval: TimeInterval? { nil }
-    public var glucoseDisplay: GlucoseDisplayable? { nil }
+    public var glucoseDisplay: GlucoseDisplayable? {
+        guard let sample = state.latestSample else { return nil }
+        return LibreLoopGlucoseDisplay(sample: sample)
+    }
 
     // DeviceManager (tidepool-sync) surface for "the device is reachable
     // but we're not getting data right now" vs "the device is broken".
@@ -498,5 +502,34 @@ public final class LibreLoopCGMManager: CGMManager {
 
     public func delete(completion: @escaping () -> Void) {
         completion()
+    }
+}
+
+// MARK: - GlucoseDisplayable
+
+struct LibreLoopGlucoseDisplay: GlucoseDisplayable {
+    let sample: LibreLoopGlucoseSample
+
+    var isStateValid: Bool { sample.isActionable }
+    var isLocal: Bool { true }
+    var glucoseRangeCategory: GlucoseRangeCategory? { nil }
+
+    var trendType: GlucoseTrend? { Self.mapTrend(sample.trend) }
+
+    static func mapTrend(_ trend: LibreLoopGlucoseSample.Trend) -> GlucoseTrend? {
+        switch trend {
+        case .notDetermined:  return nil
+        case .fallingQuickly: return .downDown
+        case .falling:        return .down
+        case .stable:         return .flat
+        case .rising:         return .up
+        case .risingQuickly:  return .upUp
+        }
+    }
+
+    var trendRate: LoopQuantity? {
+        sample.rateOfChangeMgDLPerMinute.map {
+            LoopQuantity(unit: .milligramsPerDeciliterPerMinute, doubleValue: $0)
+        }
     }
 }

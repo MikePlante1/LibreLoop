@@ -654,14 +654,7 @@ extension LibreLoopCGMManager {
     }
 
     private static func mapTrend(_ trend: LibreLoopGlucoseSample.Trend) -> GlucoseTrend? {
-        switch trend {
-        case .notDetermined: return nil
-        case .risingQuickly:  return .upUp
-        case .rising:         return .up
-        case .stable:         return .flat
-        case .falling:        return .down
-        case .fallingQuickly: return .downDown
-        }
+        LibreLoopGlucoseDisplay.mapTrend(trend)
     }
 
     static func statusText(for stage: LibreLoopPairingService.Stage) -> String {
