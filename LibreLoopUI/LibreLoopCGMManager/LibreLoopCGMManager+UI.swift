@@ -34,11 +34,22 @@ extension LibreLoopCGMManager: CGMManagerUI {
         UIImage(named: "FSL3-sensor", in: Bundle(for: LibreLoopSettingsViewModel.self), compatibleWith: nil)
     }
 
-    public var cgmStatusHighlight: DeviceStatusHighlight? { nil }
+    public var cgmStatusHighlight: DeviceStatusHighlight? {
+        switch sensorLifecycle {
+        case .warmup(_, let remaining):
+            let minutes = Int(remaining / 60)
+            let text = minutes > 0 ? "Warming up — \(minutes)m" : "Warming up"
+            return LibreLoopStatusHighlight(localizedMessage: text, imageName: "timer", state: .warning)
+        case .pairingWarmup:
+            return LibreLoopStatusHighlight(localizedMessage: "Warming up", imageName: "timer", state: .warning)
+        default:
+            return nil
+        }
+    }
 
     public var cgmStatusBadge: DeviceStatusBadge? {
         switch sensorLifecycle {
-        case .active(let remaining) where remaining < TimeInterval(2 * 3600):
+        case .active(let remaining, _) where remaining < TimeInterval(2 * 3600):
             return LibreLoopStatusBadge(image: UIImage(systemName: "clock"), state: .critical)
         case .expired:
             return LibreLoopStatusBadge(image: UIImage(systemName: "exclamationmark.triangle.fill"), state: .critical)
@@ -49,12 +60,14 @@ extension LibreLoopCGMManager: CGMManagerUI {
 
     public var cgmLifecycleProgress: DeviceLifecycleProgress? {
         switch sensorLifecycle {
-        case .active(let remaining):
+        case .warmup(let progress, _):
+            return LibreLoopLifecycleProgress(percentComplete: progress, progressState: .warning)
+        case .active(let remaining, let total):
             // Mirror G7: only surface the HUD bar once we're inside 24h.
             // Earlier in the sensor session the user doesn't need a
             // persistent reminder competing for HUD attention.
             guard remaining < TimeInterval(24 * 3600) else { return nil }
-            let percent = 1 - (remaining / LibreLoopSensorLifecycle.activeDuration)
+            let percent = 1 - (remaining / total)
             let state: DeviceLifecycleProgressState = remaining < TimeInterval(2 * 3600) ? .critical : .warning
             return LibreLoopLifecycleProgress(percentComplete: percent, progressState: state)
         case .expired:
@@ -77,4 +90,10 @@ private struct LibreLoopLifecycleProgress: DeviceLifecycleProgress {
 private struct LibreLoopStatusBadge: DeviceStatusBadge {
     var image: UIImage?
     var state: DeviceStatusBadgeState
+}
+
+private struct LibreLoopStatusHighlight: DeviceStatusHighlight {
+    var localizedMessage: String
+    var imageName: String
+    var state: DeviceStatusHighlightState
 }

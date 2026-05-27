@@ -73,7 +73,8 @@ public final class LibreLoopCGMManager: CGMManager {
             latestReadingAt: state.latestReadingTimestamp,
             firstActionableReadingAt: state.firstActionableReadingAt,
             lastPairedAt: state.lastPairedAt,
-            hasLiveMonitor: monitor != nil
+            hasLiveMonitor: monitor != nil,
+            wearDurationMinutes: state.wearDurationMinutes
         )
     }
 

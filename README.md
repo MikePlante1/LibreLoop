@@ -17,9 +17,7 @@ Working end-to-end on iOS. The plugin pairs with a Libre 3 sensor via NFC, maint
 - Loop HUD and status screen matching the G7 layout
 
 **Known limitations / not yet done:**
-- No glucose trend arrow (LibreCRKit does not yet expose trend)
-- No sensor warm-up countdown (Libre 3 warm-up is ~60 min)
-- No support for the Libre 3 Plus (14-day sensor)
+- No sensor warm-up countdown during a switch-receiver pairing (duration is sensor-reported for fresh activations)
 - Alerting is handled entirely by Loop — see the safety note below
 
 ## Safety: Glucose Alerting

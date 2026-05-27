@@ -25,9 +25,13 @@ extension LibreLoopCGMManager {
     func scheduleExpiryAlertsIfNeeded(activatedAt: Date?, currentTracker: Date?) -> Date? {
         guard let activatedAt else { return currentTracker }
         if currentTracker == activatedAt { return currentTracker }
+        let sensorLifetime: TimeInterval = state.wearDurationMinutes
+            .map { TimeInterval($0) * 60 }
+            ?? LibreLoopSensorLifecycle.activeDuration
         let alerts = LibreLoopExpiryAlerts.scheduledAlerts(
             managerIdentifier: pluginIdentifier,
-            sensorActivatedAt: activatedAt
+            sensorActivatedAt: activatedAt,
+            lifetime: sensorLifetime
         )
         let delegate = cgmManagerDelegate
         if alerts.isEmpty {
@@ -70,6 +74,9 @@ extension LibreLoopCGMManager {
         newState.bleAddress = response.bleAddress
         newState.blePIN = response.blePIN
         newState.activatedAt = response.activatedAt
+        if let wear = response.wearDurationMinutes, wear > 0 {
+            newState.wearDurationMinutes = wear
+        }
         setState(newState)
     }
 

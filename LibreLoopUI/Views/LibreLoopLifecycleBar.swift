@@ -37,9 +37,8 @@ struct LibreLoopLifecycleBar: View {
         switch lifecycle {
         case .noSensor, .initializing, .pairingWarmup: return 0
         case .warmup(let p, _): return p
-        case .active(let remaining):
-            let elapsed = LibreLoopSensorLifecycle.activeDuration - remaining
-            return elapsed / LibreLoopSensorLifecycle.activeDuration
+        case .active(let remaining, let total):
+            return (total - remaining) / total
         case .expired: return 1
         case .signalLost: return 0
         }
@@ -74,7 +73,7 @@ struct LibreLoopLifecycleBar: View {
                 return "Awaiting first actionable reading"
             }
             return "Paired \(formatElapsed(elapsed)) ago"
-        case .active(let remaining):
+        case .active(let remaining, _):
             return "\(formatRemaining(remaining)) remaining"
         case .expired:
             return "Replace sensor"

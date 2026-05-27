@@ -14,13 +14,17 @@ public enum LibreLoopSensorLifecycle: Equatable {
     /// not-actionable for a duration we can't predict precisely yet, so we
     /// anchor display on time since pair rather than a fake countdown.
     case pairingWarmup(pairedAt: Date)
-    case active(remaining: TimeInterval)
+    /// remaining: time left until expiry; total: sensor's full rated wear duration
+    case active(remaining: TimeInterval, total: TimeInterval)
     case expired
     case signalLost(since: Date)
 
-    /// Libre 3 spec values.
-    public static let warmupDuration: TimeInterval = 60 * 60          // 1 hour
-    public static let activeDuration: TimeInterval = 14 * 24 * 60 * 60 // 14 days
+    /// Libre 3 spec default wear duration (14 days). Used when the sensor
+    /// has not yet reported its own duration (e.g. legacy persisted state).
+    public static let activeDuration: TimeInterval = 14 * 24 * 60 * 60
+    /// Spec warmup duration (60 min). The Libre 3 family does not report
+    /// a sensor-specific warmup duration; this constant applies to all variants.
+    public static let warmupDuration: TimeInterval = 60 * 60
     private static let signalLostThreshold: TimeInterval = 6 * 60      // 6 minutes without a reading
 
     public static func compute(
@@ -30,13 +34,18 @@ public enum LibreLoopSensorLifecycle: Equatable {
         firstActionableReadingAt: Date?,
         lastPairedAt: Date?,
         hasLiveMonitor: Bool,
+        wearDurationMinutes: Int? = nil,
         now: Date = Date()
     ) -> LibreLoopSensorLifecycle {
         guard sensorPaired else { return .noSensor }
         guard let activatedAt else { return .initializing }
         let age = now.timeIntervalSince(activatedAt)
 
-        if age >= activeDuration {
+        let sensorWearDuration: TimeInterval = wearDurationMinutes
+            .map { TimeInterval($0) * 60 }
+            ?? activeDuration
+
+        if age >= sensorWearDuration {
             return .expired
         }
         // True initial warmup -- first hour after sensor activation. We
@@ -56,7 +65,7 @@ public enum LibreLoopSensorLifecycle: Equatable {
         if stale {
             return .signalLost(since: latestReadingAt ?? activatedAt)
         }
-        return .active(remaining: activeDuration - age)
+        return .active(remaining: sensorWearDuration - age, total: sensorWearDuration)
     }
 
     public var displayName: String {

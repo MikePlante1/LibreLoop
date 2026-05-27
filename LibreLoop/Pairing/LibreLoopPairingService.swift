@@ -40,6 +40,10 @@ public final class LibreLoopPairingService {
         /// is filled in once the first glucose reading arrives and we can
         /// back-derive from its lifeCount.
         public let activatedAt: Date?
+        /// Total sensor wear duration in minutes from the NFC patch-info.
+        /// Distinguishes Libre 3 (14-day) from Libre 3 Plus (15-day) and
+        /// any future variants without hardcoding sensor-family durations.
+        public let wearDurationMinutes: Int?
     }
 
     public struct PairOutcomeMetadata: Sendable {
@@ -338,7 +342,8 @@ public final class LibreLoopPairingService {
             sensorSerial: scanResult.patchInfo.serialNumber,
             bleAddress: activation.bleAddressDisplay,
             blePIN: activation.blePIN,
-            activatedAt: nil
+            activatedAt: nil,
+            wearDurationMinutes: Int(scanResult.patchInfo.wearDurationMinutes)
         )
         onNFCResponse(nfcResponse)
 

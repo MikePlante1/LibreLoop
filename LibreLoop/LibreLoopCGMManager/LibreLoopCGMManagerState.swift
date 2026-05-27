@@ -50,6 +50,11 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     /// default — flipping it on requires reading a warning sheet that
     /// explains the dosing-cadence implications first.
     public var experimentalMinuteByMinuteForwarding: Bool = false
+    /// Total sensor wear duration in minutes, as reported by the sensor's
+    /// NFC patch-info at pairing time. Nil for state persisted before this
+    /// field was added; callers fall back to the 14-day spec default in
+    /// that case. Libre 3 Plus sensors report a longer duration.
+    public var wearDurationMinutes: Int?
     /// `activatedAt` value for which we last issued sensor-expiry alerts
     /// via Loop's AlertManager. When this matches the current
     /// `activatedAt`, expiry alerts are already scheduled and we skip
@@ -77,6 +82,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         }
         self.latestForwardedToLoopAt = rawValue["latestForwardedToLoopAt"] as? Date
         self.experimentalMinuteByMinuteForwarding = rawValue["experimentalMinuteByMinuteForwarding"] as? Bool ?? false
+        self.wearDurationMinutes = rawValue["wearDurationMinutes"] as? Int
         self.expiryAlertsScheduledForActivatedAt = rawValue["expiryAlertsScheduledForActivatedAt"] as? Date
     }
 
@@ -100,6 +106,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         if experimentalMinuteByMinuteForwarding {
             raw["experimentalMinuteByMinuteForwarding"] = true
         }
+        raw["wearDurationMinutes"] = wearDurationMinutes
         raw["expiryAlertsScheduledForActivatedAt"] = expiryAlertsScheduledForActivatedAt
         return raw
     }
