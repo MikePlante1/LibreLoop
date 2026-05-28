@@ -116,6 +116,9 @@ struct LibreLoopSettingsView: View {
                     .padding(.leading, 18)
                 }
             }
+            if let model = viewModel.sensorModel {
+                LabeledContent("Sensor", value: model)
+            }
             if let activated = viewModel.activatedAt {
                 LabeledContent("Activated", value: activated.formatted(date: .abbreviated, time: .shortened))
             }
@@ -422,6 +425,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
     @Published private(set) var blePINHex: String?
     @Published private(set) var receiverIDHex: String?
     @Published private(set) var activatedAt: Date?
+    @Published private(set) var sensorModel: String?
     @Published private(set) var minuteByMinuteForwardingEnabled: Bool
 
     init(cgmManager: LibreLoopCGMManager) {
@@ -438,6 +442,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
         self.blePINHex = cgmManager.state.blePIN.map(Self.hex)
         self.receiverIDHex = cgmManager.state.receiverID.map(Self.hex)
         self.activatedAt = cgmManager.state.activatedAt
+        self.sensorModel = cgmManager.state.sensorModel
         self.minuteByMinuteForwardingEnabled = cgmManager.state.experimentalMinuteByMinuteForwarding
     }
 
@@ -479,6 +484,7 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
             self.blePINHex = state.blePIN.map(Self.hex)
             self.receiverIDHex = state.receiverID.map(Self.hex)
             self.activatedAt = state.activatedAt
+            self.sensorModel = state.sensorModel
             self.minuteByMinuteForwardingEnabled = state.experimentalMinuteByMinuteForwarding
         }
     }

@@ -61,6 +61,14 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     /// re-issuing on every reading. Cleared on `discardSensor()`.
     public var expiryAlertsScheduledForActivatedAt: Date?
 
+    /// Human-readable sensor model derived from the NFC-reported wear
+    /// duration. nil when the sensor hasn't been paired yet or was paired
+    /// before wear-duration capture was added.
+    public var sensorModel: String? {
+        guard let minutes = wearDurationMinutes else { return nil }
+        return minutes < 15 * 24 * 60 ? "Libre 3" : "Libre 3 Plus"
+    }
+
     public init() {}
 
     public init?(rawValue: RawValue) {
