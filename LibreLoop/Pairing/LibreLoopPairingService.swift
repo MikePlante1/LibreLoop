@@ -168,103 +168,111 @@ public final class LibreLoopPairingService {
         // and cancelling a pending connect tears down the indefinite iOS-held
         // request that would have woken us from suspension when the sensor
         // came in range — creating a window where iOS has no connect queued.
-        onStage(.bleConnecting)
-        let session: SensorSession
-        do {
-            // No timeout on reconnect: iOS will hold the pending connect
-            // and call didConnect when the peripheral comes back in range,
-            // including waking us from suspension (bluetooth-central +
-            // state restoration). Our previous 120s timeout fought iOS by
-            // tearing down the queued connect and retrying from scratch,
-            // which produced churn in the BLE stack and burned bg-task
-            // budget. Initial pair (above) keeps its 120s timeout because
-            // the user is staring at a UI and we need to surface a clear
-            // failure if the sensor isn't reachable.
-            session = try await Self.connectAndBuildSession(
-                scanner: scanner,
-                peripheral: peripheral,
-                timeout: 0
-            )
-        } catch {
-            throw Failure.underlying("BLE connection failed: \(error.localizedDescription)")
-        }
-
-        onStage(.handshaking)
-        let transport = SensorSessionTransport(session: session)
-
-        // Try the upstream cached/direct reconnect first if we have material
-        // for it. On any failure short-circuits to the full handshake path
-        // below -- upstream's guidance is "if it is rejected before Phase 6,
-        // fall back to the full authorization path".
-        if let phase5RawKey {
-            let cachedFlow = PairingFlow(transport: transport, eventLogger: { message in llog(message) })
+        return try await Self.withDisconnectWatchdog(scanner: scanner, peripheralID: peripheral.identifier) { sessionBox in
+            onStage(.bleConnecting)
+            let session: SensorSession
             do {
-                let cached = try await cachedFlow.runCachedReconnectHandshake(
-                    tail4: blePIN,
-                    phase5RawKey: phase5RawKey,
-                    r2Provider: { try Self.secureRandomBytes(count: 16) }
-                )
-                let material = cached.sessionMaterial
-                let monitor = try LibreLoopSensorMonitor.make(
+                // No timeout on reconnect: iOS will hold the pending connect
+                // and call didConnect when the peripheral comes back in range,
+                // including waking us from suspension (bluetooth-central +
+                // state restoration). Our previous 120s timeout fought iOS by
+                // tearing down the queued connect and retrying from scratch,
+                // which produced churn in the BLE stack and burned bg-task
+                // budget. Initial pair (above) keeps its 120s timeout because
+                // the user is staring at a UI and we need to surface a clear
+                // failure if the sensor isn't reachable.
+                session = try await Self.connectAndBuildSession(
                     scanner: scanner,
-                    session: session,
-                    kEnc: material.kEnc,
-                    ivEnc: material.ivEnc
-                )
-                return ReconnectOutcome(
-                    monitor: monitor,
-                    kEnc: material.kEnc,
-                    ivEnc: material.ivEnc,
-                    phase5RawKey: nil,
-                    path: .cached
+                    peripheral: peripheral,
+                    timeout: 0
                 )
             } catch {
-                // Continue to full-handshake fallback below.
+                throw Failure.underlying("BLE connection failed: \(error.localizedDescription)")
             }
-        }
+            // Hand the session to the watchdog: any .didDisconnect for
+            // this peripheral from now on will fail the session's
+            // pending writes/reads/notify changes, which makes the
+            // handshake awaits below throw promptly instead of
+            // hanging on a CB read that will never return.
+            sessionBox.set(session)
 
-        let phoneCert = try Self.loadBundled162bCert()
-        let nativeEphemeral = try SessionKey.makeFirstPairNativeEphemeral(
-            entropySource: Self.secureRandomBytes(count:)
-        )
-        let pairingFlow = PairingFlow(
-            transport: transport,
-            phoneCert: phoneCert,
-            phoneEph: nativeEphemeral.keyPair,
-            eventLogger: { message in llog(message) }
-        )
+            onStage(.handshaking)
+            let transport = SensorSessionTransport(session: session)
 
-        let handshake: FirstPairDerivedHandshakeResult
-        do {
-            handshake = try await pairingFlow.runCommandGatedFirstPairHandshake(
-                blePIN: blePIN,
-                maxEntropyAttempts: 1,
-                entropySource: { count in
-                    guard count == nativeEphemeral.nullEntropy11A.count else {
-                        throw Failure.underlying("Entropy size mismatch (\(count) vs \(nativeEphemeral.nullEntropy11A.count))")
-                    }
-                    return nativeEphemeral.nullEntropy11A
-                },
-                r2Provider: { try Self.secureRandomBytes(count: 16) }
+            // Try the upstream cached/direct reconnect first if we have material
+            // for it. On any failure short-circuits to the full handshake path
+            // below -- upstream's guidance is "if it is rejected before Phase 6,
+            // fall back to the full authorization path".
+            if let phase5RawKey {
+                let cachedFlow = PairingFlow(transport: transport, eventLogger: { message in llog(message) })
+                do {
+                    let cached = try await cachedFlow.runCachedReconnectHandshake(
+                        tail4: blePIN,
+                        phase5RawKey: phase5RawKey,
+                        r2Provider: { try Self.secureRandomBytes(count: 16) }
+                    )
+                    let material = cached.sessionMaterial
+                    let monitor = try LibreLoopSensorMonitor.make(
+                        scanner: scanner,
+                        session: session,
+                        kEnc: material.kEnc,
+                        ivEnc: material.ivEnc
+                    )
+                    return ReconnectOutcome(
+                        monitor: monitor,
+                        kEnc: material.kEnc,
+                        ivEnc: material.ivEnc,
+                        phase5RawKey: nil,
+                        path: .cached
+                    )
+                } catch {
+                    // Continue to full-handshake fallback below.
+                }
+            }
+
+            let phoneCert = try Self.loadBundled162bCert()
+            let nativeEphemeral = try SessionKey.makeFirstPairNativeEphemeral(
+                entropySource: Self.secureRandomBytes(count:)
             )
-        } catch {
-            throw Failure.underlying("Reconnect handshake failed: \(error.localizedDescription)")
-        }
+            let pairingFlow = PairingFlow(
+                transport: transport,
+                phoneCert: phoneCert,
+                phoneEph: nativeEphemeral.keyPair,
+                eventLogger: { message in llog(message) }
+            )
 
-        let material = handshake.handshake.sessionMaterial
-        let monitor = try LibreLoopSensorMonitor.make(
-            scanner: scanner,
-            session: session,
-            kEnc: material.kEnc,
-            ivEnc: material.ivEnc
-        )
-        return ReconnectOutcome(
-            monitor: monitor,
-            kEnc: material.kEnc,
-            ivEnc: material.ivEnc,
-            phase5RawKey: handshake.phase5Material.rawKey,
-            path: .fullFallback
-        )
+            let handshake: FirstPairDerivedHandshakeResult
+            do {
+                handshake = try await pairingFlow.runCommandGatedFirstPairHandshake(
+                    blePIN: blePIN,
+                    maxEntropyAttempts: 1,
+                    entropySource: { count in
+                        guard count == nativeEphemeral.nullEntropy11A.count else {
+                            throw Failure.underlying("Entropy size mismatch (\(count) vs \(nativeEphemeral.nullEntropy11A.count))")
+                        }
+                        return nativeEphemeral.nullEntropy11A
+                    },
+                    r2Provider: { try Self.secureRandomBytes(count: 16) }
+                )
+            } catch {
+                throw Failure.underlying("Reconnect handshake failed: \(error.localizedDescription)")
+            }
+
+            let material = handshake.handshake.sessionMaterial
+            let monitor = try LibreLoopSensorMonitor.make(
+                scanner: scanner,
+                session: session,
+                kEnc: material.kEnc,
+                ivEnc: material.ivEnc
+            )
+            return ReconnectOutcome(
+                monitor: monitor,
+                kEnc: material.kEnc,
+                ivEnc: material.ivEnc,
+                phase5RawKey: handshake.phase5Material.rawKey,
+                path: .fullFallback
+            )
+        }
     }
 
     public struct ReconnectOutcome {
@@ -605,6 +613,58 @@ public final class LibreLoopPairingService {
             }
             throw timeoutError()
         }
+    }
+
+    /// Holds a SensorSession reference accessible from both the
+    /// main reconnect Task and a sibling disconnect-watchdog Task.
+    /// `final class` so swapping the value via a shared reference is
+    /// thread-safe; mutation guarded by an NSLock.
+    final class SessionBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value: SensorSession?
+        func set(_ session: SensorSession?) {
+            lock.lock(); defer { lock.unlock() }
+            value = session
+        }
+        func get() -> SensorSession? {
+            lock.lock(); defer { lock.unlock() }
+            return value
+        }
+    }
+
+    /// Run an operation against a session built mid-flight, failing
+    /// the session on a CoreBluetooth `.didDisconnect` for the
+    /// peripheral. Closes the gap where SensorSession.pendingWrites
+    /// (used by PairingFlow during the handshake) would otherwise
+    /// hang forever if the link dropped between requestConnect and
+    /// handshake completion -- the original 98-min outage shape.
+    ///
+    /// Caller is responsible for calling `box.set(session)` as soon
+    /// as the session is built so the watchdog can fail it. Before
+    /// that point, a disconnect is surfaced through
+    /// connectAndBuildSession throwing on the awaited
+    /// .didConnect/.didDisconnect event.
+    static func withDisconnectWatchdog<T>(
+        scanner: SensorScannerNG,
+        peripheralID: UUID,
+        body: (SessionBox) async throws -> T
+    ) async throws -> T {
+        let box = SessionBox()
+        let watchdog = Task<Void, Never> {
+            for await event in scanner.events() {
+                if case .didDisconnect(_, let err) = event {
+                    // Capture the current session under the lock; if
+                    // any operation is in flight on it, this makes
+                    // their pending CheckedContinuations throw
+                    // SensorSessionError.disconnected.
+                    box.get()?.handleDisconnect(error: err)
+                    return
+                }
+                if Task.isCancelled { return }
+            }
+        }
+        defer { watchdog.cancel() }
+        return try await body(box)
     }
 
     private static func secureRandomBytes(count: Int) throws -> Data {
