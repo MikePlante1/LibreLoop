@@ -31,6 +31,15 @@ public final class LibreLoopCGMManager: CGMManager {
         didSet { notifyStateObservers() }
     }
 
+    /// Single-flight reconnect attempt. Non-nil while a `central.connect`+
+    /// handshake is in progress. Cleared on attempt completion. Retries
+    /// are driven by CoreBluetooth callbacks (didDisconnect / state
+    /// changes), not by a polling loop -- if an attempt finishes without
+    /// adopting a monitor, the completion handler asks CB to tear down
+    /// the link, which fires didDisconnect, which schedules the next
+    /// attempt. CB itself handles the wait-for-reachability.
+    var reconnectAttempt: Task<Void, Never>?
+
     /// Pure BLE connection state. Does NOT incorporate data-freshness
     /// signals; those belong in the lifecycle bar / Last Reading card so
     /// this row reflects only Layer 2 reality.
@@ -343,9 +352,25 @@ public final class LibreLoopCGMManager: CGMManager {
                 llog("connection event: \(String(describing: event.event)) peripheral=\(event.peripheral.identifier.uuidString)")
                 if event.peripheral.identifier == self.state.peripheralID {
                     await MainActor.run {
-                        // Any event for our peripheral is a hint to attempt
-                        // reconnect. Idempotent if loop is running.
-                        self.scheduleInitialReconnect()
+                        if event.event == .peerDisconnected {
+                            // On any disconnect: cancel anything in flight
+                            // (the cached reconnect handshake can otherwise
+                            // sit blocked on a CoreBluetooth read that will
+                            // never complete because the peer is gone --
+                            // verified to deadlock for 98+ minutes in a
+                            // field log) and queue a new reconnect attempt
+                            // immediately. iOS's central.connect is fire-
+                            // and-forget; it auto-reconnects as soon as the
+                            // peripheral is reachable, so no delays / no
+                            // background scheduling needed here.
+                            llog("disconnect: cancelling in-flight reconnect/pairing and queuing immediate retry")
+                            self.cancelReconnect()
+                            self.scheduleReconnect()
+                        } else {
+                            // Connect or other event: hint to attempt
+                            // reconnect. Idempotent if loop is running.
+                            self.scheduleReconnect()
+                        }
                     }
                 }
                 if Task.isCancelled { break }
@@ -370,7 +395,7 @@ public final class LibreLoopCGMManager: CGMManager {
                    self.state.peripheralID != nil,
                    self.monitor == nil {
                     await MainActor.run {
-                        self.scheduleInitialReconnect()
+                        self.scheduleReconnect()
                     }
                 }
                 if Task.isCancelled { break }
@@ -393,7 +418,7 @@ public final class LibreLoopCGMManager: CGMManager {
         // connected. Easiest path: drop into the same reconnect loop --
         // it'll see the peripheral via scan (or CB short-circuit because
         // it's already known) and run the handshake.
-        scheduleInitialReconnect()
+        scheduleReconnect()
     }
 
     public init() {
@@ -452,7 +477,7 @@ public final class LibreLoopCGMManager: CGMManager {
                     // Setting monitor=nil alone doesn't start the reconnect
                     // loop; kick it off explicitly. Idempotent if a loop is
                     // already running.
-                    self.scheduleInitialReconnect()
+                    self.scheduleReconnect()
                 }
             }
         }
@@ -479,7 +504,7 @@ public final class LibreLoopCGMManager: CGMManager {
             // before iOS expects to deliver willRestoreState. The
             // restoration listener is wired in the scanner accessor.
             _ = scanner
-            scheduleInitialReconnect()
+            scheduleReconnect()
         }
     }
 
@@ -503,7 +528,7 @@ public final class LibreLoopCGMManager: CGMManager {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             if needsRevive {
-                self.scheduleInitialReconnect()
+                self.scheduleReconnect()
             } else if isStalled {
                 self.monitor?.stop()
                 self.monitor = nil

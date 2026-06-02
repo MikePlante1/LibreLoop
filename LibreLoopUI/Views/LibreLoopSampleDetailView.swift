@@ -23,18 +23,8 @@ struct LibreLoopSampleDetailView: View {
                 }
             }
 
-            Section("Quality") {
-                LabeledContent("Sent to Loop") {
-                    HStack(spacing: 6) {
-                        // Actionable readings flow into Loop's dosing math;
-                        // non-actionable readings still go to Loop but as
-                        // display-only. Show as info, not warning.
-                        Image(systemName: sample.isActionable ? "checkmark.circle.fill" : "info.circle")
-                            .foregroundStyle(sample.isActionable ? .green : .secondary)
-                        Text(sample.isActionable ? "Yes" : "Display only")
-                    }
-                }
-                if let issue = sample.qualityIssue {
+            if let issue = sample.qualityIssue {
+                Section("Quality") {
                     LabeledContent("Issue") {
                         Text(issue)
                             .multilineTextAlignment(.trailing)
@@ -46,9 +36,9 @@ struct LibreLoopSampleDetailView: View {
             Section("Forwarding to Loop") {
                 LabeledContent("Sent") {
                     HStack(spacing: 6) {
-                        Image(systemName: sample.wasForwarded ? "checkmark.circle.fill" : "minus.circle")
-                            .foregroundStyle(sample.wasForwarded ? .green : .secondary)
-                        Text(sample.wasForwarded ? "Yes" : "No")
+                        Image(systemName: sentIcon)
+                            .foregroundStyle(sentColor)
+                        Text(sentLabel)
                     }
                 }
                 if let reason = sample.forwardSkipReason, !sample.wasForwarded {
@@ -74,6 +64,24 @@ struct LibreLoopSampleDetailView: View {
         }
         .navigationTitle("Sample detail")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Three states for the Forwarding row: actionable forward (used for
+    // dosing), display-only forward (chart only), and not forwarded
+    // (with reason populated separately).
+    private var sentIcon: String {
+        guard sample.wasForwarded else { return "minus.circle" }
+        return sample.isActionable ? "checkmark.circle.fill" : "info.circle"
+    }
+
+    private var sentColor: Color {
+        guard sample.wasForwarded else { return .secondary }
+        return sample.isActionable ? .green : .secondary
+    }
+
+    private var sentLabel: String {
+        guard sample.wasForwarded else { return "No" }
+        return sample.isActionable ? "Yes" : "Yes (display only)"
     }
 
     private var trendLabel: String {

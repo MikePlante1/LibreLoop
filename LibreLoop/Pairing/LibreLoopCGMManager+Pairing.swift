@@ -438,15 +438,6 @@ extension LibreLoopCGMManager {
         }
     }
 
-    /// Delay between reconnect attempts. The first attempt after a disconnect
-    /// uses this delay to let the BLE stack finish tearing down the dead link
-    /// (avoids racing the disconnect cleanup). Subsequent attempts after a
-    /// failed attempt also wait this long before retrying. CoreBluetooth's
-    /// scan keeps the radio efficient under the hood, so a constant interval
-    /// here doesn't need backoff.
-    private static let reconnectDelay: TimeInterval = 2
-
-    private static var reconnectTasks: [ObjectIdentifier: Task<Void, Never>] = [:]
 
     /// Convert each historical sample into a NewGlucoseSample (when the page
     /// decoded mg/dL is present), push the batch to Loop's delegate, and
@@ -637,53 +628,64 @@ extension LibreLoopCGMManager {
             scanner.registerForConnectionEvents(peripheralIDs: [id])
             llog("re-registered for connection events on peripheral \(id.uuidString)")
         }
-        startReconnectLoop()
+        scheduleReconnect()
     }
 
-    /// Persistent reconnect loop. Keeps trying as long as the manager exists
-    /// and we have saved state to reconnect with. Stops only on success
-    /// (a monitor is adopted) or on Task cancellation (CGM deleted, manager
-    /// torn down). The user never has to push a button.
-    private func startReconnectLoop() {
-        let task = Task { [weak self] in
-            llog("reconnect loop: starting")
-            defer {
-                Task { @MainActor [weak self] in self?.isReconnecting = false }
-                llog("reconnect loop: exiting")
+    /// Schedule a single reconnect attempt. Safe to call from any CB
+    /// event handler (state .poweredOn, didDisconnect, didFailToConnect),
+    /// app-lifecycle hooks, or Loop's periodic fetchNewDataIfNeeded.
+    ///
+    /// Idempotent: if an attempt is already in flight, this is a no-op.
+    /// If the attempt fails to adopt a monitor, the completion handler
+    /// asks CoreBluetooth to drop the link via cancelPeripheralConnection.
+    /// CB then fires didDisconnect, which calls back into this function
+    /// to schedule the next attempt. That makes retries fully event-
+    /// driven -- no polling loop, no Task.sleep, no shared state. CB
+    /// handles the wait-for-reachability between attempts.
+    func scheduleReconnect() {
+        guard monitor == nil else { return }
+        guard state.blePIN != nil, state.sensorSerial != nil else {
+            llog("reconnect: no saved state; not scheduling")
+            return
+        }
+        guard reconnectAttempt == nil else {
+            return
+        }
+        llog("reconnect: scheduling attempt")
+        isReconnecting = true
+        let scanner = self.scanner
+        let peripheralID = self.state.peripheralID
+        reconnectAttempt = Task { [weak self] in
+            guard let self else { return }
+            await self.runReconnectOnce()
+            await MainActor.run {
+                self.isReconnecting = false
+                self.reconnectAttempt = nil
             }
-            while !Task.isCancelled {
-                guard let self else { return }
-                guard self.monitor == nil else { return }
-                guard self.state.blePIN != nil, self.state.sensorSerial != nil else {
-                    llog("reconnect loop: no saved state; aborting")
-                    return
+            // If we didn't adopt a monitor, ask CB to drop the link so
+            // didDisconnect will fire and trigger the next attempt. If
+            // the peer was already disconnected, this is a no-op and
+            // we re-arm via scheduleReconnect directly to avoid being
+            // stuck (no didDisconnect coming).
+            if await MainActor.run(body: { self.monitor == nil }) {
+                if let peripheralID {
+                    await scanner.cancelPeripheralConnection(peripheralID: peripheralID)
                 }
-                await MainActor.run { self.isReconnecting = true }
-                // No pre-attempt sleep. connect() must be queued with iOS
-                // immediately after a disconnect — if we yield via Task.sleep
-                // before calling connect(), iOS can suspend the app with no
-                // pending connect in its CB stack, and nothing will wake us.
-                // G7's Thread.sleep(2) is a blocking call on a DispatchQueue
-                // thread that doesn't yield to the scheduler; Task.sleep does.
-                // The delay moves to after a failed attempt so retries still
-                // have a brief pause without blocking the first attempt.
-                await self.runReconnectOnce()
-                if self.monitor != nil { return }
-                // Retry after a brief pause so we don't spam the BLE stack
-                // on repeated failures (sensor out of range, handshake error).
-                try? await Task.sleep(nanoseconds: UInt64(Self.reconnectDelay * 1_000_000_000))
-                if Task.isCancelled { break }
+                // Belt-and-braces: if no didDisconnect arrived (e.g.,
+                // peripheral was already disconnected), schedule another
+                // attempt directly. The same scheduleReconnect guard
+                // (reconnectAttempt == nil) keeps us from racing the
+                // disconnect-event-driven path.
+                await MainActor.run {
+                    self.scheduleReconnect()
+                }
             }
         }
-        Self.reconnectTasks[ObjectIdentifier(self)] = task
     }
 
     func cancelReconnect() {
-        let key = ObjectIdentifier(self)
-        if let task = Self.reconnectTasks[key] {
-            task.cancel()
-            Self.reconnectTasks.removeValue(forKey: key)
-        }
+        reconnectAttempt?.cancel()
+        reconnectAttempt = nil
     }
 
     private func runReconnectOnce() async {
@@ -754,22 +756,6 @@ extension LibreLoopCGMManager {
                 }
             }
         }
-    }
-
-    /// Trigger an automatic reconnect loop if we have saved state and aren't
-    /// already running one. Called from app-launch state restore and from
-    /// Loop's periodic fetchNewDataIfNeeded poll.
-    func scheduleInitialReconnect() {
-        let key = ObjectIdentifier(self)
-        guard Self.reconnectTasks[key] == nil else {
-            llog("reconnect: auto-trigger skipped (loop already running)")
-            return
-        }
-        guard monitor == nil else {
-            return
-        }
-        llog("reconnect: auto-trigger (launch or poll)")
-        startReconnectLoop()
     }
 
     private static func mapTrend(_ trend: LibreLoopGlucoseSample.Trend) -> GlucoseTrend? {
