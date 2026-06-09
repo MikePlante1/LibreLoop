@@ -24,10 +24,10 @@ Working end-to-end on iOS. The plugin pairs with a Libre 3 sensor via NFC, maint
 
 Because this integration talks directly to the sensor over BLE — bypassing the official Abbott FreeStyle Libre 3 app — **the Abbott app's alerts are not active while LibreLoop is in use.** Loop's own glucose alerting system is the only source of low/high alarms.
 
-Before using LibreLoop, ensure that Loop is configured with reliable glucose alerting:
+Before using LibreLoop, ensure reliable glucose alerting is in place:
 
-- Set urgent-low, low, and high glucose alerts in Loop's **Alert Management** settings.
-- Choose **Critical Alerts** for urgent-low alarms so they break through Do Not Disturb and silent mode.
+- The recommended **[LoopKit/Loop `next-dev`](https://github.com/LoopKit/Loop/tree/next-dev)** build ships with urgent-low, low, and high glucose alerts preconfigured by default — including **Critical Alerts** for urgent-low (which break through Do Not Disturb and silent mode). If you use this build, no manual alert setup is required.
+- **Do not use LibreLoop with a different version of Loop, or another app entirely (e.g., Trio), until that app provides comparable glucose alerting** — including Critical Alerts for urgent-low that break through Do Not Disturb and silent mode. Without an equivalent alerting system in place, the wearer can miss dangerous lows and highs.
 - Tell caregivers or followers to enable a remote-monitoring solution (e.g., Nightscout, Tidepool) so someone other than the wearer can act if an alarm is missed.
 
 Do not use LibreLoop without at least one independent alerting path active.
