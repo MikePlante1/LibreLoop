@@ -32,6 +32,7 @@ struct LibreLoopSettingsView: View {
             recentReadingsSection
             debugInfoSection
             forwardingSection
+            developerSection
             activitySection
             deleteSection
         }
@@ -330,6 +331,19 @@ struct LibreLoopSettingsView: View {
         }
     }
 
+    /// Developer diagnostics. The Glucose Streams view overlays the raw Libre 3
+    /// data streams (realtime current, clinical word[5], embedded 5-min
+    /// historical, and raw sensor channels) to compare their noise.
+    private var developerSection: some View {
+        Section("Developer") {
+            NavigationLink {
+                LibreLoopStreamDebugView(viewModel: viewModel.makeStreamDebugViewModel())
+            } label: {
+                Label("Glucose Streams", systemImage: "waveform.path.ecg")
+            }
+        }
+    }
+
     private var deleteSection: some View {
         Section {
             Button("Pair new sensor") {
@@ -554,6 +568,11 @@ final class LibreLoopSettingsViewModel: ObservableObject, LibreLoopStateObserver
 
     func setMinuteByMinuteForwarding(_ enabled: Bool) {
         cgmManager.setExperimentalMinuteByMinuteForwarding(enabled)
+    }
+
+    @MainActor
+    func makeStreamDebugViewModel() -> LibreLoopStreamDebugViewModel {
+        LibreLoopStreamDebugViewModel(cgmManager: cgmManager)
     }
 
     private static func hex(_ data: Data) -> String {

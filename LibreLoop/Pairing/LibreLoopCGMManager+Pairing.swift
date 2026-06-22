@@ -167,6 +167,7 @@ extension LibreLoopCGMManager {
             onStatus: { [weak self] text in self?.updateStatusDetail(text) },
             onHistoricalPage: { [weak self] page in self?.handleHistoricalPage(page) },
             onClinicalRecord: { [weak self] record in self?.handleClinicalRecord(record) },
+            onEmbeddedHistorical: { [weak self] lifeCount, mgdl in self?.captureEmbeddedHistorical(lifeCount: lifeCount, mgdl: mgdl) },
             onPatchStatus: { [weak self] status in self?.handlePatchStatus(status) },
             onLifeCount: { [weak self] lifeCount in self?.handleLifeCount(lifeCount) }
         )
@@ -552,6 +553,9 @@ extension LibreLoopCGMManager {
     /// the same two-layered check used for historical: skip if we already
     /// have realtime or earlier-this-session backfill for that lifeCount.
     func handleClinicalRecord(_ record: ClinicalReadingRecord) {
+        // Capture every clinical record for the debug stream view (incl. raw
+        // channels and realtime-duplicate minutes), independent of forwarding.
+        captureClinicalStream(record)
         guard let activatedAt = state.activatedAt else {
             llog("clinical record received before activatedAt known; deferring")
             return

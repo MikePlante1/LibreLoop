@@ -214,6 +214,51 @@ extension LibreLoopGlucoseSample.Source {
     }
 }
 
+// MARK: - Debug stream capture
+//
+// In-memory only (never persisted). Used by the developer "Glucose Streams"
+// debug view to compare the noise of the per-minute current value against the
+// finalized 5-minute historical value and the raw sensor channels. Keyed by
+// `lifeCount` (minutes since sensor start) so series from different streams line
+// up on the same x-axis regardless of when each notification arrived.
+
+/// One captured clinical-stream record (char 08981ab8): the per-minute current
+/// glucose (word[5], same value the realtime stream emits at this lifeCount)
+/// plus the raw sensor channels (word1-3).
+public struct LibreLoopClinicalStreamSample: Equatable, Sendable {
+    public let date: Date
+    public let lifeCount: UInt16
+    public let currentMgDL: Double?
+    public let rawWord1: UInt16
+    public let rawWord2: UInt16
+    public let rawWord3: UInt16
+
+    public init(date: Date, lifeCount: UInt16, currentMgDL: Double?,
+                rawWord1: UInt16, rawWord2: UInt16, rawWord3: UInt16) {
+        self.date = date
+        self.lifeCount = lifeCount
+        self.currentMgDL = currentMgDL
+        self.rawWord1 = rawWord1
+        self.rawWord2 = rawWord2
+        self.rawWord3 = rawWord3
+    }
+}
+
+/// One captured embedded-historical value — the finalized 5-minute point carried
+/// inside each realtime frame (char 0898177a), keyed at its `historicalLifeCount`
+/// (lags the current minute by ~17 and snaps to a 5-minute boundary).
+public struct LibreLoopEmbeddedHistoricalSample: Equatable, Sendable {
+    public let date: Date
+    public let lifeCount: UInt16
+    public let mgdl: Double
+
+    public init(date: Date, lifeCount: UInt16, mgdl: Double) {
+        self.date = date
+        self.lifeCount = lifeCount
+        self.mgdl = mgdl
+    }
+}
+
 extension LibreLoopGlucoseSample.Trend {
     var rawString: String {
         switch self {

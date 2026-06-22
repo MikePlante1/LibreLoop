@@ -99,6 +99,45 @@ public final class LibreLoopCGMManager: CGMManager {
     public private(set) var recentSamples: [LibreLoopGlucoseSample] = []
     private static let recentSamplesCap = 100
 
+    // MARK: - Debug stream capture (in-memory only, for the Glucose Streams view)
+    //
+    // Captured raw so the developer debug view can compare per-minute noise.
+    // Main-queue isolated: written from the capture helpers below (which dispatch
+    // to main) and read by the debug view model on main. Never persisted.
+    private static let debugStreamCap = 720   // ~12 h of per-minute records
+    public private(set) var recentClinicalStream: [LibreLoopClinicalStreamSample] = []
+    public private(set) var recentEmbeddedHistorical: [LibreLoopEmbeddedHistoricalSample] = []
+
+    func captureClinicalStream(_ record: ClinicalReadingRecord) {
+        let sample = LibreLoopClinicalStreamSample(
+            date: Date(),
+            lifeCount: record.lifeCount,
+            currentMgDL: record.currentGlucoseMgDL.map(Double.init),
+            rawWord1: record.rawSensorWord1,
+            rawWord2: record.rawSensorWord2,
+            rawWord3: record.rawSensorWord3
+        )
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.recentClinicalStream.append(sample)
+            let overflow = self.recentClinicalStream.count - Self.debugStreamCap
+            if overflow > 0 { self.recentClinicalStream.removeFirst(overflow) }
+        }
+    }
+
+    func captureEmbeddedHistorical(lifeCount: UInt16, mgdl: UInt16) {
+        let sample = LibreLoopEmbeddedHistoricalSample(date: Date(), lifeCount: lifeCount, mgdl: Double(mgdl))
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            // The same finalized point repeats across ~5 realtime frames before
+            // historicalLifeCount advances; keep one entry per boundary.
+            if self.recentEmbeddedHistorical.last?.lifeCount == lifeCount { return }
+            self.recentEmbeddedHistorical.append(sample)
+            let overflow = self.recentEmbeddedHistorical.count - Self.debugStreamCap
+            if overflow > 0 { self.recentEmbeddedHistorical.removeFirst(overflow) }
+        }
+    }
+
     /// Computed lifecycle for UI consumption.
     public var sensorLifecycle: LibreLoopSensorLifecycle {
         LibreLoopSensorLifecycle.compute(
