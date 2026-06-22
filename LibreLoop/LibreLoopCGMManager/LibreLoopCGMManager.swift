@@ -107,6 +107,18 @@ public final class LibreLoopCGMManager: CGMManager {
     private static let debugStreamCap = 720   // ~12 h of per-minute records
     public private(set) var recentClinicalStream: [LibreLoopClinicalStreamSample] = []
     public private(set) var recentEmbeddedHistorical: [LibreLoopEmbeddedHistoricalSample] = []
+    /// Newest-first log of every decoded read for the developer read inspector.
+    public private(set) var recentReads: [LibreLoopStreamReadRecord] = []
+    private static let debugReadsCap = 300
+
+    func captureRead(_ record: LibreLoopStreamReadRecord) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.recentReads.insert(record, at: 0)
+            let overflow = self.recentReads.count - Self.debugReadsCap
+            if overflow > 0 { self.recentReads.removeLast(overflow) }
+        }
+    }
 
     func captureClinicalStream(_ record: ClinicalReadingRecord) {
         let sample = LibreLoopClinicalStreamSample(

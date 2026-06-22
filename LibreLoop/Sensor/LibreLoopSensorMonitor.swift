@@ -43,6 +43,7 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     /// instead of a fixed-delay Task — CCCD refresh duration varies with
     /// BLE conditions.
     public typealias ReadyHandler = @Sendable () -> Void
+    public typealias RawReadHandler = @Sendable (LibreLoopStreamReadRecord) -> Void
 
     private let session: SensorSession
     // Held strongly so the underlying CBCentralManager survives past pairing.
@@ -64,6 +65,9 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
     private var patchStatusHandler: PatchStatusHandler?
     private var lifeCountHandler: LifeCountHandler?
     private var readyHandler: ReadyHandler?
+    private var rawReadHandler: RawReadHandler?
+    /// Monotonic id for captured read records (debug inspector).
+    private var readSequence = 0
     /// Per-session outbound write sequence counter, used for AES-CCM nonce
     /// construction on PatchControl writes.
     private var outboundSequence: UInt16 = 0
@@ -84,7 +88,8 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
                             onEmbeddedHistorical: @escaping EmbeddedHistoricalHandler = { _, _ in },
                             onPatchStatus: @escaping PatchStatusHandler = { _ in },
                             onLifeCount: @escaping LifeCountHandler = { _ in },
-                            onReady: @escaping ReadyHandler = {}) {
+                            onReady: @escaping ReadyHandler = {},
+                            onRawRead: @escaping RawReadHandler = { _ in }) {
         lock.lock()
         defer { lock.unlock() }
         self.readingHandler = onReading
@@ -96,6 +101,20 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
         self.patchStatusHandler = onPatchStatus
         self.lifeCountHandler = onLifeCount
         self.readyHandler = onReady
+        self.rawReadHandler = onRawRead
+    }
+
+    /// Build + emit a captured read record (debug inspector). Thread-safe.
+    private func emitRead(_ channel: String, summary: String, at receivedAt: Date,
+                          _ properties: [(String, String)]) {
+        lock.lock()
+        readSequence += 1
+        let seq = readSequence
+        let handler = rawReadHandler
+        lock.unlock()
+        guard let handler else { return }
+        handler(LibreLoopStreamReadRecord(id: seq, receivedAt: receivedAt, channel: channel,
+                                          summary: summary, properties: properties))
     }
 
     private func emitStatus(_ text: String) {
@@ -173,6 +192,17 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
             llog("CCCD refresh starting")
             try await session.refreshDataPlaneNotifications()
             llog("CCCD refresh complete")
+            // Keep the clinical channel subscribed for the whole session so the
+            // per-minute clinical records (current word[5] + raw channels) stream
+            // live, not just as a burst-replay on reconnect. Best-effort: the
+            // realtime stream is what matters, so a failure here is logged but
+            // doesn't fail the session.
+            do {
+                try await session.setNotify(true, for: LibreSensorGATT.Char.clinicalData, timeout: 5)
+                llog("clinicalData notifications enabled (continuous)")
+            } catch {
+                llog("continuous clinicalData enable failed: \(String(describing: error))")
+            }
             return true
         } catch {
             llog("CCCD refresh failed: \(String(describing: error))")
@@ -275,12 +305,31 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
                 let handler = patchStatusHandler
                 lock.unlock()
                 handler?(status)
+                emitRead("Patch status", summary: "LC \(status.currentLifeCount) \(status.patchStateKind)", at: event.receivedAt, [
+                    ("currentLifeCount", "\(status.currentLifeCount)"),
+                    ("lifeCount", "\(status.lifeCount)"),
+                    ("state", "\(status.patchStateKind)"),
+                    ("errorData", "\(status.errorData)"),
+                    ("eventData", "\(status.eventData)"),
+                    ("index/total", "\(status.index)/\(status.totalEvents)"),
+                    ("stackDisconnectReason", "\(status.stackDisconnectReason)"),
+                    ("appDisconnectReason", "\(status.appDisconnectReason)"),
+                ])
             case .historicalReadingPage(let page):
                 llog("historical page startLC=\(page.startLifeCount) endLC=\(page.endLifeCount) samples=\(page.samples.count)")
                 lock.lock()
                 let handler = historicalPageHandler
                 lock.unlock()
                 handler?(page)
+                var pageProps: [(String, String)] = [
+                    ("startLifeCount", "\(page.startLifeCount)"),
+                    ("endLifeCount", "\(page.endLifeCount)"),
+                    ("sampleCount", "\(page.samples.count)"),
+                ]
+                for s in page.samples {
+                    pageProps.append(("LC \(s.lifeCount)", s.glucoseMgDL.map { "\($0) mg/dL" } ?? "raw \(s.rawValue)"))
+                }
+                emitRead("Historic page", summary: "\(page.startLifeCount)–\(page.endLifeCount) (\(page.samples.count))", at: event.receivedAt, pageProps)
             case .clinicalReadingRecord(let record):
                 let cur = record.currentGlucoseMgDL.map(String.init) ?? "nil"
                 let hist = record.historicGlucoseMgDL.map(String.init) ?? "nil"
@@ -289,6 +338,18 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
                 let handler = clinicalRecordHandler
                 lock.unlock()
                 handler?(record)
+                emitRead("Clinical", summary: "LC \(record.lifeCount) cur \(cur)", at: event.receivedAt, [
+                    ("lifeCount", "\(record.lifeCount)"),
+                    ("currentGlucose", record.currentGlucoseMgDL.map { "\($0) mg/dL" } ?? "—"),
+                    ("currentGlucoseRaw (word5)", "\(record.currentGlucoseRaw)"),
+                    ("historicGlucose", record.historicGlucoseMgDL.map { "\($0) mg/dL" } ?? "—"),
+                    ("historicGlucoseRaw (word6)", "\(record.historicGlucoseRaw)"),
+                    ("historicLifeCountEst", record.historicLifeCountEstimate.map(String.init) ?? "—"),
+                    ("rawSensorWord1", "\(record.rawSensorWord1)"),
+                    ("rawSensorWord2", "\(record.rawSensorWord2)"),
+                    ("rawSensorWord3", "\(record.rawSensorWord3)"),
+                    ("reservedWord", "\(record.reservedWord)"),
+                ])
             case .realtimeGlucose(let reading):
                 // Build a SensorLifecycle from the reading's own age counter so
                 // the quality assessment can correctly attribute "not actionable"
@@ -341,8 +402,37 @@ public final class LibreLoopSensorMonitor: @unchecked Sendable {
                     lock.unlock()
                     embedded?(reading.historicalLifeCount, histMgDL)
                 }
+                let histLag = Int(reading.lifeCount) - Int(reading.historicalLifeCount)
+                emitRead("Realtime", summary: "\(reading.currentGlucoseMgDL.map(String.init) ?? "—") mg/dL  LC \(reading.lifeCount)", at: event.receivedAt, [
+                    ("currentGlucose", reading.currentGlucoseMgDL.map { "\($0) mg/dL" } ?? "—"),
+                    ("currentValid", "\(reading.isCurrentGlucoseValid)"),
+                    ("uncappedCurrent", "\(reading.uncappedCurrentMgDL)"),
+                    ("lifeCount", "\(reading.lifeCount)"),
+                    ("trend", "\(reading.trendKind) (raw \(reading.trendRaw))"),
+                    ("rateOfChange", reading.rateOfChangeMgDLPerMinute.map { String(format: "%+.2f mg/dL/min", $0) } ?? "—"),
+                    ("projectedGlucose", "\(reading.projectedGlucose)"),
+                    ("temperature", "\(reading.temperature) (status \(reading.temperatureStatus))"),
+                    ("dqError", "\(reading.dqError)"),
+                    ("sensorCondition", "\(reading.sensorCondition)"),
+                    ("actionability", "\(reading.actionability)"),
+                    ("esaDuration", "\(reading.esaDuration)"),
+                    ("historicalLifeCount", "\(reading.historicalLifeCount)"),
+                    ("historical lag (min)", "\(histLag)"),
+                    ("historicalGlucose", reading.historicalGlucoseMgDL.map { "\($0) mg/dL" } ?? "—"),
+                    ("historicalValid", "\(reading.isHistoricalGlucoseValid)"),
+                    ("uncappedHistoric", "\(reading.uncappedHistoricMgDL)"),
+                    ("historicRangeStatus", "\(reading.historicResultRangeStatus)"),
+                    ("trendAndStatusByte", byte14),
+                    ("rest", "\(reading.rest)"),
+                    ("wordsLE", reading.wordsLE.map { String(format: "%04x", $0) }.joined(separator: " ")),
+                    ("plaintext", plaintextHex),
+                ])
             default:
                 llog("\(channel.rawValue) packet kind=\(packet.kind.rawValue) (no sample)")
+                emitRead(channel.rawValue, summary: "kind \(packet.kind.rawValue) (no sample)", at: event.receivedAt, [
+                    ("kind", "\(packet.kind.rawValue)"),
+                    ("plaintext", packet.plaintext.map { String(format: "%02x", $0) }.joined()),
+                ])
             }
         } catch {
             llog("\(channel.rawValue) decode failed: \(String(describing: error))")

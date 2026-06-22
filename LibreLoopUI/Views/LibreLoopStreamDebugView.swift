@@ -33,6 +33,7 @@ struct LibreLoopStreamDebugView: View {
             glucoseSection
             rawSection
             noiseSection
+            readsSection
         }
         .navigationTitle("Glucose Streams")
         .navigationBarTitleDisplayMode(.inline)
@@ -52,6 +53,7 @@ struct LibreLoopStreamDebugView: View {
                                  y: .value("mg/dL", p.value),
                                  series: .value("Series", "Realtime"))
                         .foregroundStyle(by: .value("Series", "Realtime"))
+                        .symbol(.circle).symbolSize(20)
                         .interpolationMethod(.monotone)
                     }
                     ForEach(viewModel.embedded) { p in
@@ -59,12 +61,13 @@ struct LibreLoopStreamDebugView: View {
                                  y: .value("mg/dL", p.value),
                                  series: .value("Series", "Embedded 5-min"))
                         .foregroundStyle(by: .value("Series", "Embedded 5-min"))
+                        .symbol(.diamond).symbolSize(28)
                         .interpolationMethod(.monotone)
                     }
                     ForEach(viewModel.clinicalCurrent) { p in
                         PointMark(x: .value("lifeCount", p.lifeCount),
                                   y: .value("mg/dL", p.value))
-                        .symbolSize(18)
+                        .symbol(.cross).symbolSize(28)
                         .foregroundStyle(by: .value("Series", "Clinical word[5]"))
                     }
                 }
@@ -73,6 +76,7 @@ struct LibreLoopStreamDebugView: View {
                     "Clinical word[5]": Color.orange,
                     "Embedded 5-min": Color.green,
                 ])
+                .chartXScale(domain: viewModel.xDomain ?? 0...1)
                 .chartXAxisLabel("lifeCount (min)")
                 .frame(height: 240)
                 .padding(.vertical, 4)
@@ -108,6 +112,7 @@ struct LibreLoopStreamDebugView: View {
                     "word2": Color.teal,
                     "word3": Color.pink,
                 ])
+                .chartXScale(domain: viewModel.xDomain ?? 0...1)
                 .chartXAxisLabel("lifeCount (min)")
                 .frame(height: 200)
                 .padding(.vertical, 4)
@@ -131,6 +136,36 @@ struct LibreLoopStreamDebugView: View {
         }
     }
 
+    @ViewBuilder
+    private var readsSection: some View {
+        Section {
+            if viewModel.reads.isEmpty {
+                Text("No reads captured yet.").foregroundStyle(.secondary)
+            } else {
+                ForEach(viewModel.reads.prefix(40)) { read in
+                    NavigationLink {
+                        LibreLoopStreamReadDetailView(read: read)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack {
+                                Text(read.channel).font(.subheadline.weight(.medium))
+                                Spacer()
+                                Text(read.receivedAt, style: .time)
+                                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                            }
+                            Text(read.summary)
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+        } header: {
+            Text("Raw Reads (newest first)")
+        } footer: {
+            Text("Each entry is one decoded packet. Tap to see when it arrived and every decoded field — including the realtime frame's historical lag, which is why the embedded 5-min value is always ~17 min behind.")
+        }
+    }
+
     private func noiseRow(_ label: String, _ points: [LibreLoopStreamDebugViewModel.Point], unit: String) -> some View {
         HStack {
             Text(label)
@@ -150,6 +185,37 @@ struct LibreLoopStreamDebugView: View {
     }
 }
 
+/// Full property dump for a single captured read.
+struct LibreLoopStreamReadDetailView: View {
+    let read: LibreLoopStreamReadRecord
+
+    var body: some View {
+        List {
+            Section {
+                LabeledContent("Stream", value: read.channel)
+                LabeledContent("Received", value: read.receivedAt.formatted(date: .abbreviated, time: .standard))
+                LabeledContent("Summary", value: read.summary)
+            }
+            Section("Decoded fields") {
+                ForEach(read.properties) { p in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(p.label)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(p.value)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.vertical, 1)
+                }
+            }
+        }
+        .navigationTitle(read.channel)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 @MainActor
 final class LibreLoopStreamDebugViewModel: ObservableObject {
     struct Point: Identifiable {
@@ -164,6 +230,7 @@ final class LibreLoopStreamDebugViewModel: ObservableObject {
     @Published private(set) var raw1: [Point] = []
     @Published private(set) var raw2: [Point] = []
     @Published private(set) var raw3: [Point] = []
+    @Published private(set) var reads: [LibreLoopStreamReadRecord] = []
 
     private let cgmManager: LibreLoopCGMManager
     private var timer: Timer?
@@ -188,11 +255,14 @@ final class LibreLoopStreamDebugViewModel: ObservableObject {
     }
 
     func refresh() {
+        // lifeCount 0 isn't a real reading minute; a stray 0 point would stretch
+        // the x-axis back to the origin and squish the actual data.
         realtime = cgmManager.recentSamples
+            .filter { $0.lifeCount > 0 }
             .map { Point(id: Int($0.lifeCount), lifeCount: Int($0.lifeCount), value: $0.valueMgDL) }
             .sorted { $0.lifeCount < $1.lifeCount }
 
-        let clinical = cgmManager.recentClinicalStream
+        let clinical = cgmManager.recentClinicalStream.filter { $0.lifeCount > 0 }
         clinicalCurrent = clinical
             .compactMap { s in s.currentMgDL.map { Point(id: Int(s.lifeCount), lifeCount: Int(s.lifeCount), value: $0) } }
             .sorted { $0.lifeCount < $1.lifeCount }
@@ -204,8 +274,20 @@ final class LibreLoopStreamDebugViewModel: ObservableObject {
             .sorted { $0.lifeCount < $1.lifeCount }
 
         embedded = cgmManager.recentEmbeddedHistorical
+            .filter { $0.lifeCount > 0 }
             .map { Point(id: Int($0.lifeCount), lifeCount: Int($0.lifeCount), value: $0.mgdl) }
             .sorted { $0.lifeCount < $1.lifeCount }
+
+        reads = cgmManager.recentReads
+    }
+
+    /// Tight x-domain (shared by both charts so they line up) covering exactly
+    /// the captured data, so a long-running sensor's large lifeCount values
+    /// aren't squished against the right edge. Padded when only one point.
+    var xDomain: ClosedRange<Int>? {
+        let lifeCounts = (realtime + clinicalCurrent + embedded + raw1 + raw2 + raw3).map(\.lifeCount)
+        guard let lo = lifeCounts.min(), let hi = lifeCounts.max() else { return nil }
+        return lo == hi ? (lo - 1)...(hi + 1) : lo...hi
     }
 
     /// Mean absolute change between consecutive (lifeCount-sorted) points — a

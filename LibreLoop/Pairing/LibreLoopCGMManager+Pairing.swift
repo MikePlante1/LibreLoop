@@ -169,7 +169,8 @@ extension LibreLoopCGMManager {
             onClinicalRecord: { [weak self] record in self?.handleClinicalRecord(record) },
             onEmbeddedHistorical: { [weak self] lifeCount, mgdl in self?.captureEmbeddedHistorical(lifeCount: lifeCount, mgdl: mgdl) },
             onPatchStatus: { [weak self] status in self?.handlePatchStatus(status) },
-            onLifeCount: { [weak self] lifeCount in self?.handleLifeCount(lifeCount) }
+            onLifeCount: { [weak self] lifeCount in self?.handleLifeCount(lifeCount) },
+            onRawRead: { [weak self] record in self?.captureRead(record) }
         )
         monitor.start()
     }

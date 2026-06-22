@@ -244,6 +244,36 @@ public struct LibreLoopClinicalStreamSample: Equatable, Sendable {
     }
 }
 
+/// One decoded read (a single completed packet) captured for the developer read
+/// inspector: when it arrived, which stream/characteristic it came on, a one-line
+/// summary for the list, and every decoded property for drill-down.
+public struct LibreLoopStreamReadRecord: Identifiable, Equatable, Sendable {
+    public struct Property: Identifiable, Equatable, Sendable {
+        public let id: Int
+        public let label: String
+        public let value: String
+        public init(id: Int, label: String, value: String) {
+            self.id = id; self.label = label; self.value = value
+        }
+    }
+
+    /// Monotonic sequence number (stable identity for SwiftUI lists).
+    public let id: Int
+    public let receivedAt: Date
+    public let channel: String
+    public let summary: String
+    public let properties: [Property]
+
+    public init(id: Int, receivedAt: Date, channel: String, summary: String,
+                properties: [(String, String)]) {
+        self.id = id
+        self.receivedAt = receivedAt
+        self.channel = channel
+        self.summary = summary
+        self.properties = properties.enumerated().map { Property(id: $0.offset, label: $0.element.0, value: $0.element.1) }
+    }
+}
+
 /// One captured embedded-historical value — the finalized 5-minute point carried
 /// inside each realtime frame (char 0898177a), keyed at its `historicalLifeCount`
 /// (lags the current minute by ~17 and snaps to a 5-minute boundary).
