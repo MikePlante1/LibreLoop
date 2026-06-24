@@ -601,6 +601,15 @@ public final class LibreLoopCGMManager: CGMManager {
             // Repopulate in-memory recent samples from the persisted tail so
             // the settings UI has context immediately after relaunch.
             self.recentSamples = parsed.recentSamples
+            // Migrate an already-paired sensor's receiverID into the stable
+            // app-wide Keychain key (introduced in this version) if it isn't
+            // there yet. This preserves the existing identity AND makes it
+            // survive a future plugin remove/re-add without re-pairing. Only
+            // seeds when the app-wide key is empty — never overwrites it.
+            if let rid = Self.receiverIDFromState(parsed.receiverID),
+               LibreLoopKeychain.loadAppReceiverID() == nil {
+                LibreLoopKeychain.saveAppReceiverID(rid)
+            }
         }
         // Saved sensor state restored -> kick off a connect attempt so we
         // start receiving glucose without waiting for Loop's next poll.
