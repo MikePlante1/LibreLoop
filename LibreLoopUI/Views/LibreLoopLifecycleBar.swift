@@ -63,24 +63,24 @@ struct LibreLoopLifecycleBar: View {
         case .noSensor:
             return ""
         case .initializing:
-            return statusDetail ?? "Waiting for first reading"
+            return statusDetail ?? LocalizedString("Waiting for first reading", comment: "Lifecycle bar detail: waiting for first reading")
         case .warmup(_, let remaining):
-            return "\(formatRemaining(remaining)) until ready"
+            return String(format: LocalizedString("%@ until ready", comment: "Lifecycle bar detail: warmup time remaining"), formatRemaining(remaining))
         case .pairingWarmup:
             // Brief window between BLE pair complete and the first
             // realtime frame arriving (~minute or less). Any reading
             // ends this state -- the actionability flag is surfaced
             // per-sample via isDisplayOnly, not held against the
             // lifecycle.
-            return "Awaiting first reading"
+            return LocalizedString("Awaiting first reading", comment: "Lifecycle bar detail: awaiting first reading after pairing")
         case .active(let remaining, _):
-            return "\(formatRemaining(remaining)) remaining"
+            return String(format: LocalizedString("%@ remaining", comment: "Lifecycle bar detail: active time remaining"), formatRemaining(remaining))
         case .expired:
-            return "Replace sensor"
+            return LocalizedString("Replace sensor", comment: "Lifecycle bar detail: replace sensor")
         case .signalLost(let since):
-            return "Last reading \(Self.relativeFormatter.localizedString(for: since, relativeTo: Date()))"
+            return String(format: LocalizedString("Last reading %@", comment: "Lifecycle bar detail: time since last reading"), Self.relativeFormatter.localizedString(for: since, relativeTo: Date()))
         case .failed:
-            return "Replace sensor"
+            return LocalizedString("Replace sensor", comment: "Lifecycle bar detail: replace sensor")
         }
     }
 

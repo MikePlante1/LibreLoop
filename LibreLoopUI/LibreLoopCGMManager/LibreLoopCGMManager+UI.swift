@@ -44,7 +44,7 @@ extension LibreLoopCGMManager: CGMManagerUI {
             // No icon -- the empty image name resolves to no UIImage and
             // keeps the pill text-only.
             return LibreLoopStatusHighlight(
-                localizedMessage: "Initializing",
+                localizedMessage: LocalizedString("Initializing", comment: "CGM status highlight: waiting for first reading"),
                 imageName: "",
                 state: .normalCGM
             )
@@ -52,7 +52,7 @@ extension LibreLoopCGMManager: CGMManagerUI {
             // Match G7: pill is two-line state only, no countdown.
             // Countdown lives on the lifecycle bar / status page.
             return LibreLoopStatusHighlight(
-                localizedMessage: "Sensor\nWarmup",
+                localizedMessage: LocalizedString("Sensor\nWarmup", comment: "CGM status highlight: sensor warming up"),
                 imageName: "clock",
                 state: .normalCGM
             )
@@ -61,26 +61,29 @@ extension LibreLoopCGMManager: CGMManagerUI {
             // not actionable. Distinct label from .warmup so users past
             // the 60-min mark don't see "Warmup" indefinitely.
             return LibreLoopStatusHighlight(
-                localizedMessage: "Sensor\nStabilizing",
+                localizedMessage: LocalizedString("Sensor\nStabilizing", comment: "CGM status highlight: sensor stabilizing after pairing"),
                 imageName: "clock",
                 state: .normalCGM
             )
         case .expired:
             return LibreLoopStatusHighlight(
-                localizedMessage: "Sensor\nExpired",
+                localizedMessage: LocalizedString("Sensor\nExpired", comment: "CGM status highlight: sensor expired"),
                 imageName: "clock",
                 state: .normalCGM
             )
         case .signalLost:
             return LibreLoopStatusHighlight(
-                localizedMessage: "Signal\nLoss",
+                localizedMessage: LocalizedString("Signal\nLoss", comment: "CGM status highlight: signal loss"),
                 imageName: "exclamationmark.circle.fill",
                 state: .warning
             )
         case .failed:
+            // Use the circle glyph (matching .signalLost and G7's failed state)
+            // so the pill icon doesn't duplicate the critical-state warning
+            // triangle Loop already renders.
             return LibreLoopStatusHighlight(
-                localizedMessage: "Replace\nSensor",
-                imageName: "exclamationmark.triangle.fill",
+                localizedMessage: LocalizedString("Replace\nSensor", comment: "CGM status highlight: sensor failed, replace it"),
+                imageName: "exclamationmark.circle.fill",
                 state: .critical
             )
         case .noSensor, .active:
@@ -92,9 +95,11 @@ extension LibreLoopCGMManager: CGMManagerUI {
         switch sensorLifecycle {
         case .active(let remaining, _) where remaining < TimeInterval(2 * 3600):
             return LibreLoopStatusBadge(image: UIImage(systemName: "clock"), state: .critical)
-        case .expired, .failed:
+        case .expired:
             return LibreLoopStatusBadge(image: UIImage(systemName: "exclamationmark.triangle.fill"), state: .critical)
         default:
+            // No badge for .failed — the "Replace Sensor" highlight already
+            // conveys it; a second triangle badge is redundant.
             return nil
         }
     }
@@ -137,4 +142,16 @@ private struct LibreLoopStatusHighlight: DeviceStatusHighlight {
     var localizedMessage: String
     var imageName: String
     var state: DeviceStatusHighlightState
+}
+
+/// Module-scoped localization for LibreLoopUI: looks strings up in the plugin's
+/// own bundle rather than the host app's global table (mirrors
+/// G7SensorKitUI.LocalizedString). Internal so it never collides with the core
+/// LibreLoop module's same-named helper.
+func LocalizedString(_ key: String, tableName: String? = nil, value: String? = nil, comment: String) -> String {
+    let bundle = Bundle(for: LibreLoopSettingsViewModel.self)
+    if let value = value {
+        return NSLocalizedString(key, tableName: tableName, bundle: bundle, value: value, comment: comment)
+    }
+    return NSLocalizedString(key, tableName: tableName, bundle: bundle, comment: comment)
 }

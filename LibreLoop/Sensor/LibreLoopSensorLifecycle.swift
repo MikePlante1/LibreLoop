@@ -83,17 +83,29 @@ public enum LibreLoopSensorLifecycle: Equatable {
 
     public var displayName: String {
         switch self {
-        case .noSensor:       return "No sensor"
-        case .initializing:   return "Initializing"
-        case .warmup:         return "Warming up"
+        case .noSensor:       return LocalizedString("No sensor", comment: "Sensor lifecycle: no sensor paired")
+        case .initializing:   return LocalizedString("Initializing", comment: "Sensor lifecycle: initializing")
+        case .warmup:         return LocalizedString("Warming up", comment: "Sensor lifecycle: warming up")
         // Distinct from .warmup: initial wall-clock warmup is complete but
         // the sensor is still flagging readings as not-actionable. "Warming
         // up" here is confusing past the 60-min mark.
-        case .pairingWarmup:  return "Stabilizing"
-        case .active:         return "Active"
-        case .expired:        return "Expired"
-        case .signalLost:     return "Signal loss"
-        case .failed:         return "Replace sensor"
+        case .pairingWarmup:  return LocalizedString("Stabilizing", comment: "Sensor lifecycle: stabilizing after pairing")
+        case .active:         return LocalizedString("Active", comment: "Sensor lifecycle: active")
+        case .expired:        return LocalizedString("Expired", comment: "Sensor lifecycle: expired")
+        case .signalLost:     return LocalizedString("Signal loss", comment: "Sensor lifecycle: signal loss")
+        case .failed:         return LocalizedString("Sensor failed", comment: "Sensor lifecycle title: sensor failed (detail says replace)")
         }
     }
+}
+
+/// Module-scoped localization for the core LibreLoop module: looks strings up in
+/// the plugin's own bundle rather than the host app's global table (mirrors
+/// G7SensorKit's LocalizedString). Internal, so it doesn't collide with
+/// LibreLoopUI's same-named helper.
+func LocalizedString(_ key: String, tableName: String? = nil, value: String? = nil, comment: String) -> String {
+    let bundle = Bundle(for: LibreLoopCGMManager.self)
+    if let value = value {
+        return NSLocalizedString(key, tableName: tableName, bundle: bundle, value: value, comment: comment)
+    }
+    return NSLocalizedString(key, tableName: tableName, bundle: bundle, comment: comment)
 }

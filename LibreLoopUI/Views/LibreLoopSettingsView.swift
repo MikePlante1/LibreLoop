@@ -212,8 +212,12 @@ struct LibreLoopSettingsView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+            } else if viewModel.lifecycle == .failed {
+                // Don't say "waiting" — the sensor has failed and won't report.
+                Text(LocalizedString("No readings — replace the sensor.", comment: "Last reading placeholder when the sensor has failed"))
+                    .foregroundStyle(.secondary)
             } else {
-                Text("Waiting for first reading…")
+                Text(LocalizedString("Waiting for first reading…", comment: "Last reading placeholder before the first reading"))
                     .foregroundStyle(.secondary)
             }
         }

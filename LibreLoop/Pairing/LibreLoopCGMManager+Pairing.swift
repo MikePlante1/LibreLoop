@@ -344,11 +344,11 @@ extension LibreLoopCGMManager {
         let content: (title: String, body: String)?
         switch attention {
         case .replaceSensor:
-            content = ("Replace sensor",
-                       "Your FreeStyle Libre 3 sensor has stopped working and needs to be replaced to resume CGM readings.")
+            content = (LocalizedString("Replace sensor", comment: "Sensor failure alert title"),
+                       LocalizedString("Your FreeStyle Libre 3 sensor has stopped working and needs to be replaced to resume CGM readings.", comment: "Sensor failure alert body"))
         case .sensorEnded:
-            content = ("Sensor ended",
-                       "Your FreeStyle Libre 3 sensor session has ended. Replace it to resume CGM readings.")
+            content = (LocalizedString("Sensor ended", comment: "Sensor ended alert title"),
+                       LocalizedString("Your FreeStyle Libre 3 sensor session has ended. Replace it to resume CGM readings.", comment: "Sensor ended alert body"))
         case .checkSensor, .none, .unknown:
             // Transient or cleared — don't alert; retract any standing one.
             content = nil
@@ -360,8 +360,8 @@ extension LibreLoopCGMManager {
         }
         let alert = Alert(
             identifier: identifier,
-            foregroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: "OK"),
-            backgroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: "OK"),
+            foregroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: LocalizedString("OK", comment: "Alert acknowledge button")),
+            backgroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: LocalizedString("OK", comment: "Alert acknowledge button")),
             trigger: .immediate,
             interruptionLevel: .timeSensitive
         )
@@ -942,7 +942,7 @@ extension LibreLoopCGMManager {
                     // is being rejected and there's no full-handshake recovery for
                     // an active sensor. Tell the user the truth (re-scan) instead
                     // of surfacing the cryptic handshake error, and alert once.
-                    self.lastReconnectError = "Can't reconnect after \(count) tries — re-scan the sensor to reconnect (or replace it if it was recently inserted)."
+                    self.lastReconnectError = String(format: LocalizedString("Can't reconnect after %d tries — re-scan the sensor to reconnect (or replace it if it was recently inserted).", comment: "Reconnect-failed status after many attempts"), count)
                     if !self.hasIssuedReScanAlert {
                         self.hasIssuedReScanAlert = true
                         self.issueReScanAlert()
@@ -971,11 +971,13 @@ extension LibreLoopCGMManager {
         let delegate = cgmManagerDelegate
         let identifier = Alert.Identifier(managerIdentifier: pluginIdentifier,
                                           alertIdentifier: Self.needsReScanAlertID)
-        let body = "Loop can't reconnect to your FreeStyle Libre 3. Scan the sensor again to resume CGM readings. If it was recently inserted and keeps failing, the sensor may be defective — replace it."
+        let title = LocalizedString("Re-scan sensor", comment: "Reconnect-failed alert title")
+        let body = LocalizedString("Loop can't reconnect to your FreeStyle Libre 3. Scan the sensor again to resume CGM readings. If it was recently inserted and keeps failing, the sensor may be defective — replace it.", comment: "Reconnect-failed alert body")
+        let ok = LocalizedString("OK", comment: "Alert acknowledge button")
         let alert = Alert(
             identifier: identifier,
-            foregroundContent: .init(title: "Re-scan sensor", body: body, acknowledgeActionButtonLabel: "OK"),
-            backgroundContent: .init(title: "Re-scan sensor", body: body, acknowledgeActionButtonLabel: "OK"),
+            foregroundContent: .init(title: title, body: body, acknowledgeActionButtonLabel: ok),
+            backgroundContent: .init(title: title, body: body, acknowledgeActionButtonLabel: ok),
             trigger: .immediate,
             interruptionLevel: .timeSensitive
         )
