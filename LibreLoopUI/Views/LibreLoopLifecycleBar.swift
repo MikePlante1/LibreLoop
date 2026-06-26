@@ -41,6 +41,7 @@ struct LibreLoopLifecycleBar: View {
             return (total - remaining) / total
         case .expired: return 1
         case .signalLost: return 0
+        case .failed: return 1
         }
     }
 
@@ -53,6 +54,7 @@ struct LibreLoopLifecycleBar: View {
         case .active:         return .green
         case .expired:        return .red
         case .signalLost:     return .yellow
+        case .failed:         return .red
         }
     }
 
@@ -77,6 +79,8 @@ struct LibreLoopLifecycleBar: View {
             return "Replace sensor"
         case .signalLost(let since):
             return "Last reading \(Self.relativeFormatter.localizedString(for: since, relativeTo: Date()))"
+        case .failed:
+            return "Replace sensor"
         }
     }
 

@@ -70,6 +70,13 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     /// re-issuing on every reading. Cleared on `discardSensor()`.
     public var expiryAlertsScheduledForActivatedAt: Date?
 
+    /// Set when the sensor self-reports a replace/error state (patchState 7 or
+    /// terminated/ended). Drives the "Replace sensor" lifecycle, status
+    /// highlight, and `isInoperable`. Persisted so it survives an app relaunch
+    /// (a failed sensor may never reconnect to re-assert it). Cleared on a new
+    /// pairing or when the sensor reports healthy again.
+    public var sensorNeedsReplacement: Bool = false
+
     /// Human-readable sensor model. Derived from `generation` when
     /// available (preferred), falling back to the wear-duration heuristic
     /// for state paired before generation was captured.
@@ -111,6 +118,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         self.warmupDurationMinutes = rawValue["warmupDurationMinutes"] as? Int
         self.generation = (rawValue["generation"] as? Int).map { UInt16(clamping: $0) }
         self.expiryAlertsScheduledForActivatedAt = rawValue["expiryAlertsScheduledForActivatedAt"] as? Date
+        self.sensorNeedsReplacement = rawValue["sensorNeedsReplacement"] as? Bool ?? false
     }
 
     public var rawValue: RawValue {
@@ -137,6 +145,9 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         raw["warmupDurationMinutes"] = warmupDurationMinutes
         raw["generation"] = generation.map { Int($0) }
         raw["expiryAlertsScheduledForActivatedAt"] = expiryAlertsScheduledForActivatedAt
+        if sensorNeedsReplacement {
+            raw["sensorNeedsReplacement"] = true
+        }
         return raw
     }
 }

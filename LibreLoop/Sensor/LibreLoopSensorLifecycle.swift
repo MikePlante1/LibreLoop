@@ -18,6 +18,10 @@ public enum LibreLoopSensorLifecycle: Equatable {
     case active(remaining: TimeInterval, total: TimeInterval)
     case expired
     case signalLost(since: Date)
+    /// Sensor self-reported a replace/error state (patchState 7, or
+    /// terminated/ended). Authoritative and overrides timing-based phases —
+    /// the sensor will not produce glucose again and must be replaced.
+    case failed
 
     /// Libre 3 spec default wear duration (14 days). Used when the sensor
     /// has not yet reported its own duration (e.g. legacy persisted state).
@@ -36,9 +40,13 @@ public enum LibreLoopSensorLifecycle: Equatable {
         hasLiveMonitor: Bool,
         wearDurationMinutes: Int? = nil,
         warmupDurationMinutes: Int? = nil,
+        needsReplacement: Bool = false,
         now: Date = Date()
     ) -> LibreLoopSensorLifecycle {
         guard sensorPaired else { return .noSensor }
+        // Sensor-reported failure is authoritative — it overrides every
+        // timing-based phase (a "failed" sensor won't resume on its own).
+        if needsReplacement { return .failed }
         guard let activatedAt else { return .initializing }
         let age = now.timeIntervalSince(activatedAt)
 
@@ -85,6 +93,7 @@ public enum LibreLoopSensorLifecycle: Equatable {
         case .active:         return "Active"
         case .expired:        return "Expired"
         case .signalLost:     return "Signal loss"
+        case .failed:         return "Replace sensor"
         }
     }
 }

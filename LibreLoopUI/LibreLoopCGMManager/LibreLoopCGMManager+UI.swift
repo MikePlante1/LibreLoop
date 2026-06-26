@@ -77,6 +77,12 @@ extension LibreLoopCGMManager: CGMManagerUI {
                 imageName: "exclamationmark.circle.fill",
                 state: .warning
             )
+        case .failed:
+            return LibreLoopStatusHighlight(
+                localizedMessage: "Replace\nSensor",
+                imageName: "exclamationmark.triangle.fill",
+                state: .critical
+            )
         case .noSensor, .active:
             return nil
         }
@@ -86,7 +92,7 @@ extension LibreLoopCGMManager: CGMManagerUI {
         switch sensorLifecycle {
         case .active(let remaining, _) where remaining < TimeInterval(2 * 3600):
             return LibreLoopStatusBadge(image: UIImage(systemName: "clock"), state: .critical)
-        case .expired:
+        case .expired, .failed:
             return LibreLoopStatusBadge(image: UIImage(systemName: "exclamationmark.triangle.fill"), state: .critical)
         default:
             return nil

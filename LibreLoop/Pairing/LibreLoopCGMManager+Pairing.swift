@@ -113,6 +113,8 @@ extension LibreLoopCGMManager {
         // actionable timestamp so the lifecycle bar correctly reports
         // "Warming up" until the new pairing produces an actionable reading.
         newState.firstReadingAt = nil
+        // New sensor — clear any prior replace/error state.
+        newState.sensorNeedsReplacement = false
         setState(newState)
 
         emitSensorStartEvent(for: newState)
@@ -322,6 +324,19 @@ extension LibreLoopCGMManager {
         guard attention != lastSensorAttention else { return }
         lastSensorAttention = attention
         llog("sensor attention: \(attention) (patchState=\(status.patchStateKind), replace=\(status.shouldNotifyReplaceSensor))")
+
+        // Persist the replace/ended state so the lifecycle, status highlight,
+        // CGM page, and isInoperable all reflect "Replace sensor" — and survive
+        // an app relaunch. Cleared when the sensor reports healthy again.
+        let needsReplacement = (attention == .replaceSensor || attention == .sensorEnded)
+        if state.sensorNeedsReplacement != needsReplacement {
+            var updated = state
+            updated.sensorNeedsReplacement = needsReplacement
+            setState(updated)
+            // Push a CGM status update so Loop's HUD re-reads cgmStatusHighlight /
+            // isInoperable immediately (there's no new glucose to trigger it).
+            notifyStatusObservers()
+        }
 
         let identifier = Alert.Identifier(managerIdentifier: pluginIdentifier,
                                           alertIdentifier: Self.sensorAttentionAlertID)

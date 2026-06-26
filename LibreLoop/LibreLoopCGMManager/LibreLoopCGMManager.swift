@@ -173,7 +173,8 @@ public final class LibreLoopCGMManager: CGMManager {
             lastPairedAt: state.lastPairedAt,
             hasLiveMonitor: monitor != nil,
             wearDurationMinutes: state.wearDurationMinutes,
-            warmupDurationMinutes: state.warmupDurationMinutes
+            warmupDurationMinutes: state.warmupDurationMinutes,
+            needsReplacement: state.sensorNeedsReplacement
         )
     }
 
@@ -374,7 +375,7 @@ public final class LibreLoopCGMManager: CGMManager {
         guard state.sensorSerial != nil else { return false }
         return monitor == nil
     }
-    public var isInoperable: Bool { false }
+    public var isInoperable: Bool { state.sensorNeedsReplacement }
 
     public var cgmManagerStatus: CGMManagerStatus {
         let lifecycle = sensorLifecycle
@@ -383,8 +384,9 @@ public final class LibreLoopCGMManager: CGMManager {
         case .warmup, .pairingWarmup: inWarmup = true
         default: inWarmup = false
         }
-        return CGMManagerStatus(hasValidSensorSession: state.sensorSerial != nil,
+        return CGMManagerStatus(hasValidSensorSession: state.sensorSerial != nil && !state.sensorNeedsReplacement,
                                 inSensorWarmup: inWarmup,
+                                isInoperable: isInoperable,
                                 lastCommunicationDate: state.latestReadingTimestamp,
                                 device: device)
     }
