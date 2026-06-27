@@ -31,6 +31,8 @@
 		8DC93AFF5F34A0AA0F038227 /* phone_cert_162b.bin in Resources */ = {isa = PBXBuildFile; fileRef = 56F71C37682F841B83230171 /* phone_cert_162b.bin */; };
 		BBFA712380AAB1FC572D3EFE /* FSL3-sensor.png in Resources */ = {isa = PBXBuildFile; fileRef = BBFA712375B13A9543390BC5 /* FSL3-sensor.png */; };
 		BBFA712680AAB1FC572D3F00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBFA712575B13A9543390BC7 /* Assets.xcassets */; };
+		A11CE5005700000000000002 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A11CE5005700000000000001 /* Localizable.xcstrings */; };
+		A11CE5005700000000000004 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A11CE5005700000000000003 /* Localizable.xcstrings */; };
 		9137EBA4DC7FD73B578C6D33 /* LibreLoopRecoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98F6F316D7DD35C1D94191DD /* LibreLoopRecoveryView.swift */; };
 		CCD413A480AAB1FC572D3EFE /* LibreLoopSampleDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD413A475B13A9543390BC5 /* LibreLoopSampleDetailView.swift */; };
 		FEEDB00000000000000000A1 /* LibreLoopStreamDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEEDF00000000000000000A1 /* LibreLoopStreamDebugView.swift */; };
@@ -118,6 +120,8 @@
 		56F71C37682F841B83230171 /* phone_cert_162b.bin */ = {isa = PBXFileReference; includeInIndex = 1; path = phone_cert_162b.bin; sourceTree = "<group>"; };
 		BBFA712375B13A9543390BC5 /* FSL3-sensor.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "FSL3-sensor.png"; sourceTree = "<group>"; };
 		BBFA712575B13A9543390BC7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A11CE5005700000000000001 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		A11CE5005700000000000003 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		587A685A26D1B17F7DC3D2BA /* LibreLoopCGMManager+Pairing.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "LibreLoopCGMManager+Pairing.swift"; sourceTree = "<group>"; };
 		5D9713A2EE7BAA3A52EC4ADF /* LibreLoopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LibreLoopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		651E3C856170F6BD369EA0DD /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
@@ -217,6 +221,7 @@
 				5604635FAE6835F4D9FE30B2 /* Pairing */,
 				BBFA712475B13A9543390BC6 /* Resources */,
 				00E82C5C2705D7D595B1BF3C /* Views */,
+				A11CE5005700000000000003 /* Localizable.xcstrings */,
 			);
 			name = LibreLoopUI;
 			path = LibreLoopUI;
@@ -284,6 +289,7 @@
 				FC4B1A6CB23FC260767D4563 /* Pairing */,
 				C092CC8E7D0DFA608FB77969 /* Sensor */,
 				1C548C80414BC10DEAEBA3D9 /* Resources */,
+				A11CE5005700000000000001 /* Localizable.xcstrings */,
 			);
 			name = LibreLoop;
 			path = LibreLoop;
@@ -503,6 +509,30 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
+				de,
+				"zh-Hans",
+				it,
+				nl,
+				nb,
+				es,
+				pl,
+				ru,
+				ja,
+				"pt-BR",
+				vi,
+				da,
+				sv,
+				fi,
+				ro,
+				tr,
+				he,
+				ar,
+				sk,
+				cs,
+				hu,
+				uk,
+				ko,
 			);
 			mainGroup = 097D0DEEAE5496094D5F3C2C;
 			minimizedProjectReferenceProxies = 0;
@@ -536,6 +566,7 @@
 			files = (
 				75DE5549CD1B188D7FCB2E63 /* LibreCRKit_LibreCRKit.bundle in Resources */,
 				8DC93AFF5F34A0AA0F038227 /* phone_cert_162b.bin in Resources */,
+				A11CE5005700000000000002 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -552,6 +583,7 @@
 			files = (
 				BBFA712380AAB1FC572D3EFE /* FSL3-sensor.png in Resources */,
 				BBFA712680AAB1FC572D3F00 /* Assets.xcassets in Resources */,
+				A11CE5005700000000000004 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
