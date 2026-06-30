@@ -238,7 +238,14 @@ struct LibreLoopSettingsView: View {
                 let visible = showingAllReadings ? viewModel.recentSamples : Array(viewModel.recentSamples.prefix(8))
                 ForEach(visible.indices, id: \.self) { idx in
                     NavigationLink {
+                        // The coordinator is a UINavigationController (no SwiftUI
+                        // NavigationStack), so this push lands in a fresh hosting
+                        // controller that does NOT inherit our environment. Re-inject
+                        // what the detail view reads, or it crashes on missing
+                        // DisplayGlucosePreference / appName.
                         LibreLoopSampleDetailView(sample: visible[idx])
+                            .environmentObject(displayGlucosePreference)
+                            .environment(\.appName, appName)
                     } label: {
                         LibreLoopReadingRow(sample: visible[idx])
                     }
