@@ -115,6 +115,7 @@ extension LibreLoopCGMManager {
         newState.firstReadingAt = nil
         // New sensor — clear any prior replace/error state.
         newState.sensorNeedsReplacement = false
+        newState.sensorEndedNormally = false
         setState(newState)
 
         emitSensorStartEvent(for: newState)
@@ -180,6 +181,9 @@ extension LibreLoopCGMManager {
         }
         self.monitor = monitor
         self.connectedAt = Date()
+        // Fresh session: hasn't streamed a reading yet. Drives the
+        // connect→no-stream livelock accounting in handleMonitorDisconnect.
+        self.currentSessionProducedData = false
         // Each new BLE session gets its own backfill window.
         self.hasRequestedBackfillThisSession = false
         self.backfillFailuresThisSession = 0
@@ -328,18 +332,30 @@ extension LibreLoopCGMManager {
     /// check-sensor and clears are logged and retract any prior alert. Patch
     /// status arrives ~once a minute, so we only act when the state changes.
     private func notifySensorAttentionIfNeeded(_ status: PatchStatus) {
-        let attention = status.sensorAttention
+        // A code-7 "transmission error" (`Libre3SensorError.transmissionError`)
+        // is a transient comms fault, not a terminal replace condition — the
+        // sensor keeps producing valid glucose. LibreCRKit's coarse attention
+        // mapping lumps code 7 in with code 8 (terminated) as `.replaceSensor`;
+        // downgrade it here to a soft, retractable `.checkSensor` notice so it
+        // never marks the sensor inoperable or stops Loop.
+        let attention: Libre3SensorAttention = status.sensorError == .transmissionError
+            ? .checkSensor
+            : status.sensorAttention
         guard attention != lastSensorAttention else { return }
         lastSensorAttention = attention
-        llog("sensor attention: \(attention) (patchState=\(status.patchStateKind), replace=\(status.shouldNotifyReplaceSensor))")
+        llog("sensor attention: \(attention) (rawAttention=\(status.sensorAttention), sensorError=\(status.sensorError), patchState=\(status.patchStateKind), replace=\(status.shouldNotifyReplaceSensor))")
 
         // Persist the replace/ended state so the lifecycle, status highlight,
         // CGM page, and isInoperable all reflect "Replace sensor" — and survive
         // an app relaunch. Cleared when the sensor reports healthy again.
         let needsReplacement = (attention == .replaceSensor || attention == .sensorEnded)
-        if state.sensorNeedsReplacement != needsReplacement {
+        // A normal end-of-life (`sensorEnded`) surfaces as "Expired"; an early
+        // failure (`replaceSensor`) as "Sensor failed". Both need replacement.
+        let endedNormally = needsReplacement && attention == .sensorEnded
+        if state.sensorNeedsReplacement != needsReplacement || state.sensorEndedNormally != endedNormally {
             var updated = state
             updated.sensorNeedsReplacement = needsReplacement
+            updated.sensorEndedNormally = endedNormally
             setState(updated)
             // Push a CGM status update so Loop's HUD re-reads cgmStatusHighlight /
             // isInoperable immediately (there's no new glucose to trigger it).
@@ -349,16 +365,25 @@ extension LibreLoopCGMManager {
         let identifier = Alert.Identifier(managerIdentifier: pluginIdentifier,
                                           alertIdentifier: Self.sensorAttentionAlertID)
         let delegate = cgmManagerDelegate
-        let content: (title: String, body: String)?
+        let content: (title: String, body: String, level: Alert.InterruptionLevel)?
         switch attention {
         case .replaceSensor:
             content = (LocalizedString("Replace sensor", comment: "Sensor failure alert title"),
-                       LocalizedString("Your FreeStyle Libre 3 sensor has stopped working and needs to be replaced to resume CGM readings.", comment: "Sensor failure alert body"))
+                       LocalizedString("Your FreeStyle Libre 3 sensor has stopped working and needs to be replaced to resume CGM readings.", comment: "Sensor failure alert body"),
+                       .timeSensitive)
         case .sensorEnded:
             content = (LocalizedString("Sensor ended", comment: "Sensor ended alert title"),
-                       LocalizedString("Your FreeStyle Libre 3 sensor session has ended. Replace it to resume CGM readings.", comment: "Sensor ended alert body"))
+                       LocalizedString("Your FreeStyle Libre 3 sensor session has ended. Replace it to resume CGM readings.", comment: "Sensor ended alert body"),
+                       .timeSensitive)
+        case .checkSensor where status.sensorError == .transmissionError:
+            // Transient comms fault (code 7). Soft, retractable notice that does
+            // not interrupt or stop Loop; readings resume on their own. Retracted
+            // as soon as the sensor reports a healthy status again.
+            content = (LocalizedString("Check sensor", comment: "Sensor check alert title"),
+                       LocalizedString("Loop is having trouble communicating with your FreeStyle Libre 3 sensor. CGM readings may pause briefly and should resume automatically. No action is needed unless this keeps happening.", comment: "Sensor check alert body (transient transmission error)"),
+                       .active)
         case .checkSensor, .none, .unknown:
-            // Transient or cleared — don't alert; retract any standing one.
+            // Other transient/cleared states — don't alert; retract any standing one.
             content = nil
         }
 
@@ -371,7 +396,7 @@ extension LibreLoopCGMManager {
             foregroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: LocalizedString("OK", comment: "Alert acknowledge button")),
             backgroundContent: .init(title: content.title, body: content.body, acknowledgeActionButtonLabel: LocalizedString("OK", comment: "Alert acknowledge button")),
             trigger: .immediate,
-            interruptionLevel: .timeSensitive
+            interruptionLevel: content.level
         )
         Task { await delegate?.issueAlert(alert) }
     }
@@ -408,6 +433,9 @@ extension LibreLoopCGMManager {
     }
 
     func ingest(_ sample: LibreLoopGlucoseSample) {
+        // Mark that this monitor session has actually streamed — a healthy
+        // disconnect, not a connect→arm-fail cycle (see handleMonitorDisconnect).
+        currentSessionProducedData = true
         recordSample(sample)
         // Now that we have a confirmed realtime reading, we know the
         // sensor's current lifecount and can issue a sensible-range backfill
@@ -754,7 +782,21 @@ extension LibreLoopCGMManager {
             llog("monitor reported disconnect; manager deleted, not reconnecting")
             return
         }
-        llog("monitor reported disconnect; clearing and reconnecting")
+        // Distinguish a healthy stream-then-drop from a connect→adopt→arm-fail
+        // cycle that never streamed. The latter, repeated, is the CCCD-arming
+        // livelock: the link connects and adopts a monitor every cycle (so the
+        // reconnect-failure counter keeps resetting and nothing escalates),
+        // but post-auth notification arming times out, so no glucose flows.
+        if currentSessionProducedData {
+            consecutiveNoStreamDisconnects = 0
+        } else {
+            consecutiveNoStreamDisconnects += 1
+        }
+        let liveAge = state.latestReadingTimestamp.map { "\(Int(Date().timeIntervalSince($0)))s ago" } ?? "never"
+        llog("monitor reported disconnect; clearing and reconnecting (streamedThisSession=\(currentSessionProducedData), consecutiveNoStreamCycles=\(consecutiveNoStreamDisconnects), lastLiveGlucose=\(liveAge))")
+        if consecutiveNoStreamDisconnects >= Self.noStreamLivelockWarnThreshold {
+            llog("WARNING: \(consecutiveNoStreamDisconnects) consecutive connect→no-stream cycles — sensor connects and adopts a monitor but post-auth notification arming keeps failing (CCCD notify-ack timeout), so no glucose flows. This is the arming livelock that has historically cleared only on a fresh characteristic discovery (e.g. app restart).")
+        }
         // Don't cancel any in-flight reconnect attempt here. The session
         // backing this monitor is already dead; a reconnect Task that's
         // running is either a fresh handshake on a new link (which we must

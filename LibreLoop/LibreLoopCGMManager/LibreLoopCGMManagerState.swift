@@ -77,6 +77,14 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
     /// pairing or when the sensor reports healthy again.
     public var sensorNeedsReplacement: Bool = false
 
+    /// Distinguishes *why* the sensor needs replacement, when
+    /// `sensorNeedsReplacement` is set: `true` for a normal end-of-life
+    /// (the sensor self-reported `sensorEnded`), `false` for an early
+    /// failure (`replaceSensor` / patchState 7). Drives whether the UI shows
+    /// "Sensor Expired" vs "Sensor failed" — both still require replacement
+    /// and mark the CGM inoperable. Persisted alongside `sensorNeedsReplacement`.
+    public var sensorEndedNormally: Bool = false
+
     /// Human-readable sensor model. Derived from `generation` when
     /// available (preferred), falling back to the wear-duration heuristic
     /// for state paired before generation was captured.
@@ -119,6 +127,7 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         self.generation = (rawValue["generation"] as? Int).map { UInt16(clamping: $0) }
         self.expiryAlertsScheduledForActivatedAt = rawValue["expiryAlertsScheduledForActivatedAt"] as? Date
         self.sensorNeedsReplacement = rawValue["sensorNeedsReplacement"] as? Bool ?? false
+        self.sensorEndedNormally = rawValue["sensorEndedNormally"] as? Bool ?? false
     }
 
     public var rawValue: RawValue {
@@ -147,6 +156,9 @@ public struct LibreLoopCGMManagerState: RawRepresentable, Equatable {
         raw["expiryAlertsScheduledForActivatedAt"] = expiryAlertsScheduledForActivatedAt
         if sensorNeedsReplacement {
             raw["sensorNeedsReplacement"] = true
+        }
+        if sensorEndedNormally {
+            raw["sensorEndedNormally"] = true
         }
         return raw
     }

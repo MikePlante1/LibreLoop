@@ -174,7 +174,8 @@ public final class LibreLoopCGMManager: CGMManager {
             hasLiveMonitor: monitor != nil,
             wearDurationMinutes: state.wearDurationMinutes,
             warmupDurationMinutes: state.warmupDurationMinutes,
-            needsReplacement: state.sensorNeedsReplacement
+            needsReplacement: state.sensorNeedsReplacement,
+            endedNormally: state.sensorEndedNormally
         )
     }
 
@@ -253,6 +254,22 @@ public final class LibreLoopCGMManager: CGMManager {
     /// Cap on the exponential reconnect backoff (seconds) so a persistently
     /// failing/marginal link doesn't hammer the radio and drain the battery.
     static let maxReconnectBackoff: TimeInterval = 300
+
+    /// True once the *current* adopted monitor session produces a realtime
+    /// reading. Lets us tell a healthy stream-then-drop apart from a
+    /// connect→adopt→arm-fail cycle that never streamed. Reset in `adopt`.
+    var currentSessionProducedData = false
+    /// Consecutive monitor disconnects where the link connected + adopted a
+    /// monitor but never streamed a reading (i.e. post-auth CCCD/notification
+    /// arming failed). Unlike `consecutiveReconnectFailures`, this survives the
+    /// per-cycle adopt "success", so a connect→no-stream→reconnect livelock
+    /// (which historically only clears on a fresh discovery / app restart) is
+    /// visible and quantified in field logs. Reset once a session streams.
+    var consecutiveNoStreamDisconnects = 0
+    /// Log an explicit livelock warning once this many connect→no-stream
+    /// cycles stack up, so field captures name the pattern instead of burying
+    /// it in a repeating connect/disconnect sequence.
+    static let noStreamLivelockWarnThreshold = 3
 
     /// Backoff before the next reconnect attempt, by consecutive-failure count.
     /// First couple of retries are immediate (transient RF blips recover fast);

@@ -16,11 +16,15 @@ public enum LibreLoopSensorLifecycle: Equatable {
     case pairingWarmup(pairedAt: Date)
     /// remaining: time left until expiry; total: sensor's full rated wear duration
     case active(remaining: TimeInterval, total: TimeInterval)
+    /// End of life: either the wear clock reached the sensor's rated duration,
+    /// or the sensor self-reported `sensorEnded`. Needs replacement, but is a
+    /// normal outcome (shown as "Expired", not a failure).
     case expired
     case signalLost(since: Date)
-    /// Sensor self-reported a replace/error state (patchState 7, or
-    /// terminated/ended). Authoritative and overrides timing-based phases —
-    /// the sensor will not produce glucose again and must be replaced.
+    /// Sensor self-reported an early replace/error state (patchState 7 /
+    /// `replaceSensor`) before reaching end of life. Authoritative and overrides
+    /// timing-based phases — the sensor will not produce glucose again and must
+    /// be replaced. A normal end-of-life reports `.expired`, not `.failed`.
     case failed
 
     /// Libre 3 spec default wear duration (14 days). Used when the sensor
@@ -41,12 +45,15 @@ public enum LibreLoopSensorLifecycle: Equatable {
         wearDurationMinutes: Int? = nil,
         warmupDurationMinutes: Int? = nil,
         needsReplacement: Bool = false,
+        endedNormally: Bool = false,
         now: Date = Date()
     ) -> LibreLoopSensorLifecycle {
         guard sensorPaired else { return .noSensor }
-        // Sensor-reported failure is authoritative — it overrides every
-        // timing-based phase (a "failed" sensor won't resume on its own).
-        if needsReplacement { return .failed }
+        // A sensor-reported replace/ended state is authoritative — it overrides
+        // every timing-based phase (it won't resume on its own). Distinguish a
+        // normal end-of-life (self-reported `sensorEnded`) from an early failure
+        // so the UI shows "Expired" vs "Sensor failed"; both require replacement.
+        if needsReplacement { return endedNormally ? .expired : .failed }
         guard let activatedAt else { return .initializing }
         let age = now.timeIntervalSince(activatedAt)
 
